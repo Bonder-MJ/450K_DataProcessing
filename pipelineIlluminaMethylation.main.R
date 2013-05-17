@@ -262,7 +262,7 @@ source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
     for(i in 1:ncol(beta)){
       beta1 <- beta[,i]
       m1 <- log2(beta1/(1 - beta1))  
-      beta[,i] <- beta1
+      beta[,i] <- m1
     }
     
     
