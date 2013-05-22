@@ -92,7 +92,8 @@ PATH_SRC <- "./SRC/"
 #PATH_RES <- "./RES_Muscle_SWan_NoQN/"
 #PATH_RES <- "./KI_RES_BMIQ/"
 #PATH_RES <- "./RES_KI_SQN/"
-PATH_RES <- "./KI_RES_SWAN/Comp3"
+PATH_RES <- "./RES_test/"
+#PATH_RES <- "./KI_RES_SWAN/Comp3"
 
 #
 # set PATH to a folder of "projects" where each project corresponds to a folder of 450K plate extracted data : control probes methylation informations, raw sample methylation informations (data extracted with GenomeStudio) and eventually a sample IDs list to select. Only subfolders for plates can exist, otherwise the program will try to open any existing file as folder and crash.
@@ -101,21 +102,20 @@ PATH_RES <- "./KI_RES_SWAN/Comp3"
 #	- raw sample methylation file: file name must starts with the pattern "TableSample"
 #	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList"
 
-PATH_PROJECT_DATA <- "./DATA_KI/"
+#PATH_PROJECT_DATA <- "./DATA_KI/"
 #PATH_PROJECT_DATA <- "./DATA/"
-#PATH_PROJECT_DATA <- "./DATA_test/"
+PATH_PROJECT_DATA <- "./DATA_test/"
 
 #
 # set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed.
-#PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt"
-#PATH_ProbeSNP_LIST <- NULL
-PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/450K_KI_exclusionList_10102012.txt"
+#PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt"
+PATH_ProbeSNP_LIST <- NULL
 #
 #######################################
 ### set pipeline options and parameters
 #
 # The name that will be given to result files
-projectName = "ILLUMINA450K_all_UMCG"
+projectName = "ILLUMINA450K"
 #
 # Minimal bead number for considering that a probe worked. If =NULL, does not perform bead nb. based filtering.
 nbBeads.threshold = 3
@@ -135,6 +135,11 @@ XY.filtering = TRUE
 # if 'TRUE' performs a color bias correction of methylated and unmethylated signals.
 colorBias.corr = TRUE
 #
+# if 'TRUE' a additional sample filtering based on average M and U values is preformed. Cut-offs are designed based on a set of >2000 450k samples. 
+average.U.M.Check = TRUE
+minimalAverageChanelValue = 3108.038
+maxratioDifference = 0.2506493
+#
 # If "separatecolors", performs a separate color bg adjustement (recommended), if "unseparatecolors" performs a non separate color bg adjustement , if "no" don't perform any bg adjustement.
 bg.adjust = "separatecolors"
 #
@@ -145,12 +150,12 @@ probeAnnotationsCategory = "relationToCpG"
 QCplot=FALSE
 #
 # Select the normalization procedure. Switch between SQN / SWAN / M-Value correction  and BMIQ. If not give / write error this will default to SQN
-#NormProcedure = "SQN"
-NormProcedure = "SWAN"
+NormProcedure = "SQN"
+#NormProcedure = "SWAN"
 #NormProcedure = "BMIQ"
 #NormProcedure = "M-ValCor"
 
-#Set alfa
+#Set alfa, used during transformation from U + M to Beta value
 alfa = 100
 
 # Do QN after SWAN / BMIQ / M-ValCor"
@@ -174,6 +179,9 @@ require(RPMM)
 require(preprocessCore)
 require(minfi)
 require(matrixStats)
+require(compiler)
+
+enableJIT(1)
 
 source(paste(PATH_SRC,"loadMethylumi2.R", sep=""))
 source(paste(PATH_SRC,"lumiMethyR2.R", sep=""))
@@ -202,6 +210,7 @@ source(paste(PATH_SRC,"hclustPlot.R", sep=""))
 source(paste(PATH_SRC,"Additions/BMIQ_1.1_Pipeline.R", sep=""))
 source(paste(PATH_SRC,"Additions/swan2.R", sep=""))
 source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
+source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
 #
@@ -223,6 +232,9 @@ source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
       probeSNP_LIST = probeSNP_LIST,
       XY.filtering = XY.filtering,
       colorBias.corr = colorBias.corr,
+      average.U.M.Check = average.U.M.Check,
+      minimalAverageChanelValue = minimalAverageChanelValue,
+      maxratioDifference = maxratioDifference,
       bg.adjust = bg.adjust,
       PATH = PATH_RES,
       QCplot = QCplot,
@@ -241,6 +253,9 @@ source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
       probeSNP_LIST = probeSNP_LIST,
       XY.filtering = XY.filtering,
       colorBias.corr = colorBias.corr,
+      average.U.M.Check = average.U.M.Check,
+      minimalAverageChanelValue = minimalAverageChanelValue,
+      maxratioDifference = maxratioDifference,
       bg.adjust = bg.adjust,
       PATH = PATH_RES,
       QCplot = QCplot,

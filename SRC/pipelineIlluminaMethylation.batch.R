@@ -14,6 +14,9 @@ pipelineIlluminaMethylation.batch <- function(
 	probeSNP_LIST,
 	XY.filtering,
 	colorBias.corr,
+	average.U.M.Check,
+	minimalAverageChanelValue = minimalAverageChanelValue,
+	maxratioDifference = maxratioDifference,
 	bg.adjust,
 	PATH,
 	QCplot=TRUE,
@@ -58,7 +61,8 @@ pipelineIlluminaMethylation.batch <- function(
 			cat(warning)
 			return(warning)	
 		}
-
+    
+		path2sampleList <- NULL
 		if(sampleSelection){
 			sampleList <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern = "sampleList")
 			path2sampleList <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleList, sep="")
@@ -81,8 +85,9 @@ pipelineIlluminaMethylation.batch <- function(
 		
 		cat("\tSample table: ", path2data, "\n")
 		cat("\tControl table: ", path2controlData, "\n")
-		cat("\tSample list (for sample selection): ", path2sampleList, "\n")
-			
+    if(!is.null(path2sampleList)){
+		  cat("\tSample list (for sample selection): ", path2sampleList, "\n")
+	  }
 		#############################
 		# starts data preprocessing #
 		#############################
@@ -98,6 +103,9 @@ pipelineIlluminaMethylation.batch <- function(
 			probeSNP_LIST,
 			XY.filtering = XY.filtering,
 			colorBias.corr = colorBias.corr,
+			average.U.M.Check = average.U.M.Check,
+			minimalAverageChanelValue = minimalAverageChanelValue,
+			maxratioDifference = maxratioDifference,
 			bg.adjust = bg.adjust,
 			PATH = PATH_RES,
 			QCplot = QCplot
@@ -126,7 +134,12 @@ pipelineIlluminaMethylation.batch <- function(
 			cat("\t beta_", i, " ok (", dim(beta_i)[1], "x", dim(beta_i)[2], ").\n")
 			detectionPval_i <- assayDataElement(methLumi_data, "detection")
 			cat("\t For all sub-projects: beta matrices concatenation & detection p-value matrices concatenation.\n")
-
+			
+      if(length(which(colnames(beta_i)%in%colnames(beta)))!=0){
+			  cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
+			  return(NULL)
+			}
+      
 			beta <- concatenateMatrices(beta, beta_i) ; rm(beta_i)
 			detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
 			annotation <- annotation[ which(is.element(annotation$TargetID, rownames(beta))),]
@@ -208,6 +221,9 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 	probeSNP_LIST,
 	XY.filtering,
 	colorBias.corr,
+	average.U.M.Check,
+	minimalAverageChanelValue = minimalAverageChanelValue,
+	maxratioDifference = maxratioDifference,
 	bg.adjust,
 	PATH,
 	QCplot=TRUE,
@@ -291,6 +307,9 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 			probeSNP_LIST,
 			XY.filtering = XY.filtering,
 			colorBias.corr = colorBias.corr,
+			average.U.M.Check = average.U.M.Check,
+			minimalAverageChanelValue = minimalAverageChanelValue,
+			maxratioDifference = maxratioDifference,
 			bg.adjust = bg.adjust,
 			PATH = PATH_RES,
 			QCplot = QCplot
@@ -305,7 +324,7 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 		# Sub-project data & information concatenation #
 		################################################
 
-		if(i == 1){
+		if(is.null(beta)){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			
 			unMeth <- unmethylated(methLumi_data)
@@ -327,10 +346,15 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 			cat("\t For all sub-projects: beta matrices concatenation & detection p-value matrices concatenation.\n")
 			qc_i <- intensitiesByChannel(QCdata(methLumi_data))
 			
+      if(length(which(colnames(beta_i)%in%colnames(beta)))!=0){
+        cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
+        return(NULL)
+      }
+			
 			qc[[1]] <- cbind(qc[[1]], qc_i[[1]])
 			qc[[2]] <- cbind(qc[[2]], qc_i[[2]])
 			
-			beta <- concatenateMatrices(beta, beta_i) ; 
+			beta <- concatenateMatrices(beta, beta_i) ;
 			
 			detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
 			annotation <- annotation[ which(is.element(annotation$TargetID, rownames(beta))),]

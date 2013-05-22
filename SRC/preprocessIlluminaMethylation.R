@@ -32,6 +32,9 @@ preprocessIlluminaMethylation <- function(
 	probeSNP_LIST,
 	XY.filtering,
 	colorBias.corr=TRUE,
+	average.U.M.Check = FALSE,
+	minimalAverageChanelValue = minimalAverageChanelValue,
+	maxratioDifference = maxratioDifference,
 	bg.adjust="separatecolors",
 	PATH="./",
 	QCplot=TRUE)
@@ -52,23 +55,6 @@ preprocessIlluminaMethylation <- function(
 		plotQC(getMethylumiBeta(methLumi_data), figName=paste(projectName, "_beta.raw", sep=""), PATH = PATH)
 	}
 
-# nbBeads filtering
-	if(!is.null(nbBeads.threshold)){
-		i<-i+1
-		cat(" Step ", i, ": start nb beads/probe filtering...\n")
-		methLumi_data <- nbBeadsFilter(methLumi_data, nbBeads.threshold)
-		cat("\t...done.\n\n")
-	}
-	
-# sample QC and filtering
-	if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
-		i<-i+1
-		cat(" Step ", i, ": start sample QC & filtering...\n")
-		methLumi_data <- detectionPval.filter(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
-		cat("\t Project samples nb. after sample QC: ", length(sampleNames(methLumi_data)), ".\n")
-		cat("\t...done.\n\n")
-	}
-	
 # remove controls or unrelevant samples
 	if(!is.null(sample2keep)) {
 		i<-i+1
@@ -85,28 +71,57 @@ preprocessIlluminaMethylation <- function(
 		cat("\t Project samples nb after sample selection: ", length(sampleNames(methLumi_data)), ".\n")
 		cat("\t...done.\n\n")
 	}
+  
 # SNP filtering
 	if(!is.null(probeSNP_LIST)){
-		
-		i <- i+1
-		cat(" Step ", i, ": start frequent SNP filtering...\n")
-		indexProbe2remove <- which(is.element(featureNames(methLumi_data), probeSNP_LIST))
-		if(length(indexProbe2remove)>0) methLumi_data <- methLumi_data[-indexProbe2remove,]
-
-		cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
-		cat("\t...done.\n\n")
+	  
+	  i <- i+1
+	  cat(" Step ", i, ": start frequent SNP filtering...\n")
+	  indexProbe2remove <- which(is.element(featureNames(methLumi_data), probeSNP_LIST))
+	  if(length(indexProbe2remove)>0) methLumi_data <- methLumi_data[-indexProbe2remove,]
+	  
+	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
+	  cat("\t...done.\n\n")
 	}
 	
 # XY chz filtering
 	if(XY.filtering){
-		i <- i+1
-		cat(" Step ", i, ": start elimination of X & Y chr. probes...\n")
-		methLumi_data <- filterXY(methLumi_data)
-		cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
-		cat("\t...done.\n\n")
+	  i <- i+1
+	  cat(" Step ", i, ": start elimination of X & Y chr. probes...\n")
+	  methLumi_data <- filterXY(methLumi_data)
+	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
+	  cat("\t...done.\n\n")
 	}
+  
+# nbBeads filtering
+	if(!is.null(nbBeads.threshold)){
+	  i<-i+1
+	  cat(" Step ", i, ": start nb beads/probe filtering...\n")
+	  methLumi_data <- nbBeadsFilter(methLumi_data, nbBeads.threshold)
+	  cat("\t...done.\n\n")
+	}
+  
+# sample QC and filtering
+  if((!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)) || average.U.M.Check){
+    i<-i+1
+    cat(" Step ", i, ": start sample QC & filtering...\n")
+    cat("\t Project samples nb. before QC: ", length(sampleNames(methLumi_data)), ".\n")
+    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+      methLumi_data <- detectionPval.filter(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
+      cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_data)), ".\n")
+    }
+    # remove bad U + M samples
+    if(average.U.M.Check) {
+      methLumi_data <- AverageUandM.filter(methLumi_data, minimalAverageChanelValue, maxratioDifference, projectName, PATH=PATH)
+      cat("\t Project samples nb. average chanel filtering: ", length(sampleNames(methLumi_data)), ".\n")
+    }
+    cat("\t...done.\n\n")
+    if(length(sampleNames(methLumi_data))==0){
+      return(NULL)
+    }
+  }
 	
-	#plot raw data QC
+#plot raw data QC
 	if(QCplot){
 		plotQC(getMethylumiBeta(methLumi_data), figName=paste(projectName, "_beta.filter", sep=""), PATH = PATH)
 	}
@@ -137,7 +152,7 @@ preprocessIlluminaMethylation <- function(
 		cat(" Step ", i, ": no background subtraction.\n")
 	}
 
-	#plot raw data QC
+#plot raw data QC
 	if(QCplot){
 		plotQC(getMethylumiBeta(methLumi_data), figName=paste(projectName, "_beta.preproc", sep=""), PATH = PATH)
 	}
