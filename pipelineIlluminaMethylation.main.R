@@ -107,9 +107,10 @@ PATH_RES <- "./RES_test/"
 PATH_PROJECT_DATA <- "./DATA_test/"
 
 #
-# set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed.
+# set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays.
+PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", "./ADDITIONAL_INFO/ProbeFiltering/ProbesBindingNonOptimal/ProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt")
 #PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt"
-PATH_ProbeSNP_LIST <- NULL
+#PATH_ProbeSNP_LIST <- NULL
 #
 #######################################
 ### set pipeline options and parameters
@@ -215,8 +216,19 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
 	{
-	if(is.character(PATH_ProbeSNP_LIST)) probeSNP_LIST <- unlist(read.table(file=PATH_ProbeSNP_LIST, quote="", sep="\t", header=TRUE))
-	else{probeSNP_LIST <- NULL}
+  	if(is.character(PATH_ProbeSNP_LIST)){
+      if(length(PATH_ProbeSNP_LIST)==1){
+        probeSNP_LIST <- unlist(read.table(file=PATH_ProbeSNP_LIST, quote="", sep="\t", header=TRUE))  
+      } else {
+        probeSNP_LIST <- NULL
+        for(id in 1:length(PATH_ProbeSNP_LIST)){
+          probeSNP_LIST <- union(probeSNP_LIST, unlist(read.table(file=PATH_ProbeSNP_LIST[id], quote="", sep="\t", header=TRUE)))
+        }
+      }
+  	} 
+  	else{
+      probeSNP_LIST <- NULL
+  	}
 	}
 #
   data.preprocess.norm <- NULL
