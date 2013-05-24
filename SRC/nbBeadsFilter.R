@@ -19,8 +19,8 @@ nbBeadsFilter <- function(methyLumi, nbBeads.threshold = 3){
 	assayDataElement(methyLumi, "Avg_NBEADS_B") <- NULL
 	
 	#identify nbBeads < 3
-	indexA <- which(nbBeadA < 3)
-	indexB <- which(nbBeadB < 3)
+	indexA <- which(nbBeadA < nbBeads.threshold)
+	indexB <- which(nbBeadB < nbBeads.threshold)
 	indexAB <- union(indexA, indexB)
 	rm(indexA, indexB)
 
@@ -33,4 +33,29 @@ nbBeadsFilter <- function(methyLumi, nbBeads.threshold = 3){
 	rm(detectPval, indexAB)
 
 	return(methyLumi)
+}
+
+nbBeadsFilterIdat <- function(methyLumi, NumberOfBeads, nbBeads.threshold = 3){
+  
+  keepInf <- which(rownames(NumberOfBeads) %in% rownames(methylated(methyLumi)))
+  
+  NumberOfBeads <- NumberOfBeads[keepInf,]
+  NumberOfBeads <- NumberOfBeads[order(rownames(NumberOfBeads)),]
+  
+  #identify nbBeads < 3
+  indexA <- which(NumberOfBeads < nbBeads.threshold)
+  indexB <- which(is.na(NumberOfBeads))
+  indexAB <- union(indexA, indexB)
+  
+  rm(indexA, indexB)
+  
+  #get detection pvalues
+  detectPval <- assayDataElement(methyLumi, "detection")
+  
+  #set detection p-values associated to non significant signals to 1
+  detectPval[indexAB] <- 1
+  assayDataElement(methyLumi, "detection") <- detectPval
+  rm(detectPval, indexAB)
+  
+  return(methyLumi)
 }

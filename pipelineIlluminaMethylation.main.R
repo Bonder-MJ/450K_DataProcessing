@@ -2,9 +2,9 @@
 # Nizar TOULEIMAT
 # nizar.touleimat @ cng.com
 #
-######################
+#######################
 #### TO READ FIRST ####
-######################
+#######################
 # setwd("d:/UMCG/450K_pipeline_Nov2012release/")
 # This script, when sourced ( source("pipelineIlluminaMethylation.main.R") ), loads raw methylation data and performs a complete preprocessing and normalization of a batch of Illumina 450K data (corresponding to different plates).
 #
@@ -211,6 +211,7 @@ source(paste(PATH_SRC,"hclustPlot.R", sep=""))
 source(paste(PATH_SRC,"Additions/BMIQ_1.1_Pipeline.R", sep=""))
 source(paste(PATH_SRC,"Additions/swan2.R", sep=""))
 source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
+source(paste(PATH_SRC,"Additions/beadcountMJ.R", sep=""))
 source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
@@ -271,8 +272,8 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       bg.adjust = bg.adjust,
       PATH = PATH_RES,
       QCplot = QCplot,
-      alfa,
-      betweenSampleCorrection = betweenSampleCorrection
+      betweenSampleCorrection = betweenSampleCorrection,
+      alfa
     )
   }
   
