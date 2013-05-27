@@ -1,7 +1,7 @@
 
 # code from minfi minimally modified to not require minfi objects
 
-swan2 <- function (unMeth, meth, qc) {
+swan2 <- function (unMeth, meth, qc, alfa) {
 
 #LS#  make a MethylSet containing the data and an RGChannelSet just for the annotation
 #    if (is.null(mSet)) 
@@ -62,7 +62,7 @@ swan2 <- function (unMeth, meth, qc) {
     assayDataElement(normSet, "Unmeth") <- normUnmethData
     normSet@preprocessMethod <- c(sprintf("SWAN (based on a MethylSet preprocesses as '%s'", mSet@preprocessMethod[1]), as.character(packageVersion("minfi")), as.character(packageVersion("IlluminaHumanMethylation450kmanifest")))
 	
-    return(getBeta(normSet))
+    return(getBeta(normSet, offset= alfa))
 }
 
 bgIntensitySwan.methylumi  <- function (rg) { # rg is a list of 

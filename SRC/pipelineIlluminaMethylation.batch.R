@@ -182,7 +182,7 @@ pipelineIlluminaMethylation.batch <- function(
 		# Sub-project data & information concatenation #
 		################################################
 
-		if(is.null(beta)){
+    if(is.null(beta) && length(sampleNames(methLumi_data))>0){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			cat("\t beta plate", i, " ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
 			detectionPval <- assayDataElement(methLumi_data, "detection")
@@ -191,7 +191,7 @@ pipelineIlluminaMethylation.batch <- function(
 			annotation <- fData(methLumi_data) ; rm(methLumi_data)
 			index <- which(is.element(colnames(annotation), c("TargetID", "INFINIUM_DESIGN_TYPE", "RELATION_TO_UCSC_CPG_ISLAND", "UCSC_REFGENE_GROUP")))
 			annotation <- annotation[,index]
-		} else {
+		} else if(length(sampleNames(methLumi_data))>0){
 			#concatenate 'betas'
 			beta_i <- getMethylumiBeta(methLumi_data, alfa)
 			cat("\t beta_", i, " ok (", dim(beta_i)[1], "x", dim(beta_i)[2], ").\n")
@@ -274,7 +274,7 @@ pipelineIlluminaMethylation.batch <- function(
 
 # This function performs a complete Illumina 450K array data preprocessing and swan for a data batch (set of 450K "plates").
 #
-pipelineIlluminaMethylation.batch.SWAN <- function(
+pipelineIlluminaMethylation.batch2 <- function(
 	PATH_PROJECT_DATA,
 	projectName,
 	nbBeads.threshold,
@@ -291,7 +291,8 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 	PATH,
 	QCplot=TRUE,
 	betweenSampleCorrection = TRUE,
-	alfa=100
+	alfa=100,
+	NormProcedure
  ){
 
 	####################################
@@ -454,12 +455,12 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 		# Sub-project data & information concatenation #
 		################################################
 
-    if(readFromOriginalInput==TRUE && readFromOriginalInput==TRUE){
-      cat("Warning: In SWAN preprocessing no mixing of input types is allowed.\n")
+    if(readFromOriginalInput==TRUE && readFromIdat==TRUE){
+      cat("Warning: In SWAN & DASEN preprocessing no mixing of input types is allowed.\n")
       return(NULL)
     }
     
-		if(is.null(beta)){
+		if(is.null(beta) && length(sampleNames(methLumi_data))>0){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			
 			unMeth <- unmethylated(methLumi_data)
@@ -475,7 +476,8 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 			annotation <- fData(methLumi_data) ; rm(methLumi_data)
 			index <- which(is.element(colnames(annotation), c("TargetID", "INFINIUM_DESIGN_TYPE", "RELATION_TO_UCSC_CPG_ISLAND", "UCSC_REFGENE_GROUP")))
 			annotation <- annotation[,index]
-		} else{
+		} else if(length(sampleNames(methLumi_data))>0){
+      print(dim(methLumi_data))
 			#concatenate 'betas'
 			beta_i <- getMethylumiBeta(methLumi_data, alfa)
 			cat("\t beta_", i, " ok (", dim(beta_i)[1], "x", dim(beta_i)[2], ").\n")
@@ -522,6 +524,9 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 					
 					meth <- cbind(meth[order(rownames(meth)),], meth_i[order(rownames(meth_i)),])
 					unMeth <- cbind(unMeth[order(rownames(unMeth)),], unMeth_i[order(rownames(unMeth_i)),])
+          
+					rm(unMeth_i)
+					rm(meth_i)
 				}
 			} else {
 				unMeth_i <- unmethylated(methLumi_data)
@@ -535,11 +540,12 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 				
 				meth <- cbind(meth[order(rownames(meth)),], meth_i[order(rownames(meth_i)),])
 				unMeth <- cbind(unMeth[order(rownames(unMeth)),], unMeth_i[order(rownames(unMeth_i)),])
+				
+        rm(unMeth_i)
+				rm(meth_i)
 			}
 			rm(beta_i)
 			rm(qc_i)
-			rm(unMeth_i)
-			rm(meth_i)
 			
 			cat("\t beta ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
 			cat("\t detection p-values ok (", dim(detectionPval)[1], "x", dim(detectionPval)[2], ").\n")
@@ -580,13 +586,26 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 	
 	write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
-	data.preprocess.norm <- normalizeIlluminaMethylationSWAN(
-		detect.pval = detectionPval,
-		unMeth,
-		meth,
-		qc,
-		betweenSampleCorrection = betweenSampleCorrection
-	)
+	if(NormProcedure=="SWAN"){
+		data.preprocess.norm <- normalizeIlluminaMethylationSWAN(
+			detect.pval = detectionPval,
+			unMeth,
+			meth,
+			qc,
+      alfa,
+			betweenSampleCorrection = betweenSampleCorrection
+		)
+	} else {
+		data.preprocess.norm <- normalizeIlluminaMethylationDASEN(
+			detect.pval = detectionPval,
+			unMeth,
+			meth,
+			qc,
+			annotation,
+      alfa,
+			betweenSampleCorrection = betweenSampleCorrection
+		)
+	}
 
 	return(data.preprocess.norm)
 }

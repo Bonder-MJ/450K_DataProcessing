@@ -64,10 +64,11 @@ normalizeIlluminaMethylationSWAN <- function(
 	unMeth,
 	meth,
 	qc,
+	alfa,
 	betweenSampleCorrection = TRUE
 	)
 {	
-	normalizedBeta <- swan2(unMeth, meth, qc)
+	normalizedBeta <- swan2(unMeth, meth, qc, alfa)
 	
 	if(any(is.na(normalizedBeta))){
 		for(i in 1: ncol(normalizedBeta)){
@@ -187,5 +188,46 @@ normalizeIlluminaMethylationMValCor <- function(
 	names(data.norm) <- c("beta", "detection.pvalue")
 	cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
 
+	return(data.norm)
+}
+
+normalizeIlluminaMethylationDASEN <- function(
+	detect.pval,
+	unMeth,
+	meth,
+	qc,
+	annotation,
+	alfa,
+	betweenSampleCorrection = TRUE
+	)
+{	
+	
+	
+	normalizedBeta <- dasen(unMeth, meth, annotation$INFINIUM_DESIGN_TYPE)
+	
+	if(any(is.na(normalizedBeta))){
+		for(i in 1: ncol(normalizedBeta)){
+			if(any(is.na(normalizedBeta[,i]))){
+				ids <- which(is.na(normalizedBeta[,i]))
+				med <- median(normalizedBeta[-ids,i])
+				normalizedBeta[ids,i] <- med
+			}
+		}
+	}
+	
+	##Do QN over samples after DASEN?
+	if(betweenSampleCorrection==TRUE){
+		normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
+		rownames(normalizedBeta2) <- rownames(normalizedBeta)
+		colnames(normalizedBeta2) <- colnames(normalizedBeta)
+		normalizedBeta <- normalizedBeta2
+		rm(normalizedBeta2)
+	}
+	data.norm <- list(normalizedBeta, detect.pval)
+	
+	names(data.norm) <- c("beta", "detection.pvalue")
+	
+	cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
+		
 	return(data.norm)
 }

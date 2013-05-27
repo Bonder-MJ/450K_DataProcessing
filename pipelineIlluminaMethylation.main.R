@@ -150,11 +150,12 @@ probeAnnotationsCategory = "relationToCpG"
 # If QCplot==TRUE, performs and plots hierarchical clustering and plots methylation density curves.
 QCplot=FALSE
 #
-# Select the normalization procedure. Switch between SQN / SWAN / M-Value correction  and BMIQ. If not give / write error this will default to SQN
+# Select the normalization procedure. Switch between SQN / SWAN / M-Value / DASEN correction and BMIQ. If not give / write error this will default to SQN
 #NormProcedure = "SQN"
 #NormProcedure = "SWAN"
 #NormProcedure = "BMIQ"
-NormProcedure = "M-ValCor"
+#NormProcedure = "M-ValCor"
+NormProcedure = "DASEN"
 
 #Set alfa, used during transformation from U + M to Beta value
 alfa = 100
@@ -212,6 +213,7 @@ source(paste(PATH_SRC,"Additions/BMIQ_1.1_Pipeline.R", sep=""))
 source(paste(PATH_SRC,"Additions/swan2.R", sep=""))
 source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
 source(paste(PATH_SRC,"Additions/beadcountMJ.R", sep=""))
+source(paste(PATH_SRC,"Additions/dasen.R", sep=""))
 source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
@@ -234,7 +236,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
   data.preprocess.norm <- NULL
   print(paste(NormProcedure ,"normalization procedure"))
-  if(NormProcedure != "SWAN"){
+  if(NormProcedure != "SWAN" && NormProcedure != "DASEN"){
     data.preprocess.norm <- pipelineIlluminaMethylation.batch(
       PATH_PROJECT_DATA,
       projectName = projectName,
@@ -253,10 +255,10 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       QCplot = QCplot,
       betweenSampleCorrection = betweenSampleCorrection,
       alfa,
-	    NormProcedure
+      NormProcedure
     )
   } else {
-    data.preprocess.norm <- pipelineIlluminaMethylation.batch.SWAN(
+    data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
       PATH_PROJECT_DATA,
       projectName = projectName,
       nbBeads.threshold = nbBeads.threshold,
@@ -273,7 +275,8 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       PATH = PATH_RES,
       QCplot = QCplot,
       betweenSampleCorrection = betweenSampleCorrection,
-      alfa
+      alfa,
+      NormProcedure
     )
   }
   
