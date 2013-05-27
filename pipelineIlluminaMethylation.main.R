@@ -151,10 +151,10 @@ probeAnnotationsCategory = "relationToCpG"
 QCplot=FALSE
 #
 # Select the normalization procedure. Switch between SQN / SWAN / M-Value correction  and BMIQ. If not give / write error this will default to SQN
-NormProcedure = "SQN"
+#NormProcedure = "SQN"
 #NormProcedure = "SWAN"
 #NormProcedure = "BMIQ"
-#NormProcedure = "M-ValCor"
+NormProcedure = "M-ValCor"
 
 #Set alfa, used during transformation from U + M to Beta value
 alfa = 100

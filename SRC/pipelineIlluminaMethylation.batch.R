@@ -56,7 +56,7 @@ pipelineIlluminaMethylation.batch <- function(
       
       cat("\n\tStart data loading...\n")
       
-      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), parallel=T)
+      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
       methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
       
       RG.set <- read.450k.exp(base=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), extended=TRUE)
@@ -178,13 +178,11 @@ pipelineIlluminaMethylation.batch <- function(
 			next;
 		}
     
-    print(dim(methLumi_data))
 		################################################
 		# Sub-project data & information concatenation #
 		################################################
 
 		if(is.null(beta)){
-		  print(dim(methLumi_data))
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			cat("\t beta plate", i, " ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
 			detectionPval <- assayDataElement(methLumi_data, "detection")
@@ -292,8 +290,8 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 	bg.adjust,
 	PATH,
 	QCplot=TRUE,
-	alfa=100,
-	betweenSampleCorrection = TRUE
+	betweenSampleCorrection = TRUE,
+	alfa=100
  ){
 
 	####################################
@@ -303,98 +301,172 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
 	beta <- NULL
+	sampleAnnotationInfomation <- NULL
+	path2sampleList <- NULL
 	
 	#for all subprojects
 	for(i in 1:length(subProjects)){
+	  
+    methLumi_data <- NULL
+    readFromIdat <- FALSE
+    readFromOriginalInput <- FALSE
 		projectName_batch <- subProjects[i]
 		sampleTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableSample")
 		controlTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableControl")
 		cat("\n# ")
 		cat("Processing sub-project: ", projectName_batch, "\n")
 
-		if(length(sampleTable) > 1){
-			warning <- "\tWARNING ! Sample table: too many files matching with pattern 'TableSample' ! \n"
-			cat(warning)
-			return(warning)
-		}
-		if(length(sampleTable) < 1){
-			warning <- "\tWARNING ! Sample table: no file matching with pattern 'TableSample' ! \n"
-			cat(warning)
-			return(NULL)
-		}
-		if(length(controlTable) > 1){
-			warning <- "\tWARNING ! Control table: too many files matching with pattern 'TableControl' ! \n"
-			cat(warning)
-			return(warning)
-		}
-		if(length(controlTable) < 1){
-			warning <- "\tWARNING ! Control table: no file matching with pattern 'TableControl' ! \n"
-			cat(warning)
-			return(warning)	
-		}
-
-		if(sampleSelection){
-			sampleList <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern = "sampleList")
-			path2sampleList <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleList, sep="")
-
-			if(length(sampleList) > 1){
-				warning <- "\tWARNING ! List for sample selection: too many files matching with pattern 'SampleList' ! \n"
-				cat(warning)
-				return(warning)
-			}
-			if(length(sampleList) < 1){
-				warning <- "\tWARNING ! List for sample selection: no file matching with pattern 'SampleList' ! \n"
-				path2sampleList <- NULL
-				cat(warning)
-			}
-		}
-		else{path2sampleList <- NULL}
-
-		path2data <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleTable, sep="")
-		path2controlData <- paste(PATH_PROJECT_DATA, projectName_batch, "/", controlTable, sep="")
-		
-		cat("\tSample table: ", path2data, "\n")
-		cat("\tControl table: ", path2controlData, "\n")
-		cat("\tSample list (for sample selection): ", path2sampleList, "\n")
-			
-		#############################
-		# starts data preprocessing #
-		#############################
-		
-		methLumi_data <- preprocessIlluminaMethylation(
-			path2data = path2data,
-			path2controlData = path2controlData,
-			projectName = projectName_batch,
-			nbBeads.threshold = nbBeads.threshold,
-			detectionPval.threshold = detectionPval.threshold,
-			detectionPval.perc.threshold = detectionPval.perc.threshold,
-			sample2keep = path2sampleList,
-			probeSNP_LIST,
-			XY.filtering = XY.filtering,
-			colorBias.corr = colorBias.corr,
-			average.U.M.Check = average.U.M.Check,
-			minimalAverageChanelValue = minimalAverageChanelValue,
-			maxratioDifference = maxratioDifference,
-			bg.adjust = bg.adjust,
-			PATH = PATH_RES,
-			QCplot = QCplot
-		)
+    #####
+    if(length(sampleTable) < 1 && length(controlTable) < 1 && length(list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat"))>0){
+      readFromIdat=TRUE
+      barcode<- list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat")
+      
+      barcode <- gsub("_Grn.idat","",x=barcode)
+      barcode <- gsub("_Red.idat","",x=barcode)
+      barcodes <- unique(barcode)
+      
+      cat("\n\tStart data loading...\n")
+      
+      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
+      methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
+      
+      RG.set <- read.450k.exp(base=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), extended=TRUE)
+      NumberOfBeads <- beadcountMJ(RG.set)
+      rm(RG.set)
+      
+      cat("\tProject sample nb: ", length(barcodes), ".\n")
+      cat("\tData dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
+      cat("\t...data loaded..\n\n")
+      
+      if(is.null(sampleAnnotationInfomation)){
+        annotationFile <- paste(getwd(),"/ADDITIONAL_INFO/ProbeAnnotation/ProbeInformationSample.txt", sep="")
+        if(file.exists(annotationFile)){
+#           sampleAnnotationInfomation <- read.table(file=annotationFile,header=T, sep="\t", quote = "")
+          sampleAnnotationInfomation <- read.AnnotatedDataFrame(file=annotationFile,header=T, sep="\t", quote = "")
+        } else {
+          cat("No annotation file present can not read .idat files.\nSkipping directory.\n")
+          next;
+        }
+      }
+      
+      #############################
+      # starts data preprocessing #
+      #############################
+      
+      methLumi_data <- preprocessIlluminaMethylationIdat(
+        methLumi_dataTmpData,
+        NumberOfBeads,
+        sampleAnnotationInfomation,
+        projectName = projectName_batch,
+        nbBeads.threshold = nbBeads.threshold,
+        detectionPval.threshold = detectionPval.threshold,
+        detectionPval.perc.threshold = detectionPval.perc.threshold,
+        sample2keep = path2sampleList,
+        probeSNP_LIST,
+        XY.filtering = XY.filtering,
+        colorBias.corr = colorBias.corr,
+        average.U.M.Check = average.U.M.Check,
+        minimalAverageChanelValue = minimalAverageChanelValue,
+        maxratioDifference = maxratioDifference,
+        bg.adjust = bg.adjust,
+        PATH = PATH_RES,
+        QCplot = QCplot
+      )
+      rm(methLumi_dataTmpData)
+    } else {
+      readFromOriginalInput=TRUE
+  		if(length(sampleTable) > 1){
+  			warning <- "\tWARNING ! Sample table: too many files matching with pattern 'TableSample' ! \n"
+  			cat(warning)
+  			return(warning)
+  		}
+  		if(length(sampleTable) < 1){
+  			warning <- "\tWARNING ! Sample table: no file matching with pattern 'TableSample' ! \n"
+  			cat(warning)
+  			return(NULL)
+  		}
+  		if(length(controlTable) > 1){
+  			warning <- "\tWARNING ! Control table: too many files matching with pattern 'TableControl' ! \n"
+  			cat(warning)
+  			return(warning)
+  		}
+  		if(length(controlTable) < 1){
+  			warning <- "\tWARNING ! Control table: no file matching with pattern 'TableControl' ! \n"
+  			cat(warning)
+  			return(warning)	
+  		}
+      
+  		
+  		if(sampleSelection){
+  			sampleList <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern = "sampleList")
+  			path2sampleList <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleList, sep="")
+  
+  			if(length(sampleList) > 1){
+  				warning <- "\tWARNING ! List for sample selection: too many files matching with pattern 'SampleList' ! \n"
+  				cat(warning)
+  				return(warning)
+  			}
+  			if(length(sampleList) < 1){
+  				warning <- "\tWARNING ! List for sample selection: no file matching with pattern 'SampleList' ! \n"
+  				path2sampleList <- NULL
+  				cat(warning)
+  			}
+  		}
+  		else{path2sampleList <- NULL}
+  
+  		path2data <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleTable, sep="")
+  		path2controlData <- paste(PATH_PROJECT_DATA, projectName_batch, "/", controlTable, sep="")
+  		
+  		cat("\tSample table: ", path2data, "\n")
+  		cat("\tControl table: ", path2controlData, "\n")
+      if(!is.null(path2sampleList)){
+  		  cat("\tSample list (for sample selection): ", path2sampleList, "\n")
+  	  }
+  		#############################
+  		# starts data preprocessing #
+  		#############################
+  
+  		methLumi_data <- preprocessIlluminaMethylation(
+  			path2data = path2data,
+  			path2controlData = path2controlData,
+  			projectName = projectName_batch,
+  			nbBeads.threshold = nbBeads.threshold,
+  			detectionPval.threshold = detectionPval.threshold,
+  			detectionPval.perc.threshold = detectionPval.perc.threshold,
+  			sample2keep = path2sampleList,
+  			probeSNP_LIST,
+  			XY.filtering = XY.filtering,
+  			colorBias.corr = colorBias.corr,
+  			average.U.M.Check = average.U.M.Check,
+  			minimalAverageChanelValue = minimalAverageChanelValue,
+  			maxratioDifference = maxratioDifference,
+  			bg.adjust = bg.adjust,
+  			PATH = PATH_RES,
+  			QCplot = QCplot
+  		)
+    }
 		
 		if(is.null(methLumi_data)){
 			next;
 		}
-		
-
+    
 		################################################
 		# Sub-project data & information concatenation #
 		################################################
 
+    if(readFromOriginalInput==TRUE && readFromOriginalInput==TRUE){
+      cat("Warning: In SWAN preprocessing no mixing of input types is allowed.\n")
+      return(NULL)
+    }
+    
 		if(is.null(beta)){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			
 			unMeth <- unmethylated(methLumi_data)
 			meth <- methylated(methLumi_data)
-			qc <- intensitiesByChannel(QCdata(methLumi_data)) 
+      qc <- intensitiesByChannel(QCdata(methLumi_data)) 
+			rownames(qc[[1]]) <- toupper(rownames(qc[[1]]))
+			rownames(qc[[2]]) <- toupper(rownames(qc[[2]]))
 			
 			cat("\t beta plate", i, " ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
 			detectionPval <- assayDataElement(methLumi_data, "detection")
@@ -410,12 +482,22 @@ pipelineIlluminaMethylation.batch.SWAN <- function(
 			detectionPval_i <- assayDataElement(methLumi_data, "detection")
 			cat("\t For all sub-projects: beta matrices concatenation & detection p-value matrices concatenation.\n")
 			qc_i <- intensitiesByChannel(QCdata(methLumi_data))
+			rownames(qc_i[[1]]) <- toupper(rownames(qc_i[[1]]))
+			rownames(qc_i[[2]]) <- toupper(rownames(qc_i[[2]]))
+      
+			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[1]]))
+			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[2]]))
 			
       if(length(which(colnames(beta_i)%in%colnames(beta)))!=0){
         cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
         return(NULL)
       }
 			
+      id1 <- which(tolower(rownames(qc[[1]])) %in% tolower(rownames(qc_i[[1]])))
+			id2 <- which(rownames(qc_i[[1]]) %in% rownames(qc[[1]]))
+      
+			which(rownames(qc[[1]]) %in% toupper(rownames(qc_i[[1]])))
+      
 			qc[[1]] <- cbind(qc[[1]], qc_i[[1]])
 			qc[[2]] <- cbind(qc[[2]], qc_i[[2]])
 			

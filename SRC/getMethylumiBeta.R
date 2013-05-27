@@ -13,8 +13,6 @@ getMethylumiBeta <- function(methylumi, alfa=100){
 	fNames <- featureNames(methylumi)
 	u <- unmethylated(methylumi)
 	m <- methylated(methylumi)
-  print(dim(u))
-  print(dim(m))
 	rm(methylumi)
 
 	#check and "correct" for na values
