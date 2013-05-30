@@ -158,7 +158,8 @@ normalizeIlluminaMethylationMValCor <- function(
 	probeAnnotationsCategory = "relationToCpG",
 	QCplot = TRUE,
 	PATH_RES,
-	betweenSampleCorrection = FALSE
+	betweenSampleCorrection = FALSE,
+	medianReplacement = TRUE
 	)
 {	
 	
@@ -167,7 +168,7 @@ normalizeIlluminaMethylationMValCor <- function(
 	#loop through all samples
 	rm(probeAnnotations)
 	
-	normalizedBeta <- MvalType2Cor(data1=beta, type1=MValAnnotation, PATH_RES=PATH_RES, QCplot=QCplot)
+	normalizedBeta <- MvalType2Cor(data1=beta, type1=MValAnnotation, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
 	rownames(normalizedBeta) <- normalizedBeta[,1]
 	normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
 	colnames(normalizedBeta) <- colnames(beta)
@@ -230,4 +231,52 @@ normalizeIlluminaMethylationDASEN <- function(
 	cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
 		
 	return(data.norm)
+}
+
+normalizeIlluminaMethylationMValCor2 <- function(
+  unMeth,
+  meth,
+  detect.pval,
+  probeAnnotations,
+  QCplot = TRUE,
+  PATH_RES,
+  alfa,
+  betweenSampleCorrection = FALSE,
+  MvalueConv = FALSE,
+  medianReplacement = TRUE
+)
+{	
+  
+  MValAnnotation <- cbind(rownames(probeAnnotations), as.character(probeAnnotations$INFINIUM_DESIGN_TYPE))
+  colnames(MValAnnotation) <- c("TargetID", "INFINIUM_DESIGN_TYPE")
+  #loop through all samples
+  rm(probeAnnotations)
+  
+  normalizedBeta <- MvalType2Cor2(dataU=unMeth , dataM = meth, type1=MValAnnotation, alfa=alfa, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
+  
+  rownames(normalizedBeta) <- normalizedBeta[,1]
+  normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
+  colnames(normalizedBeta) <- colnames(beta)
+  
+  rm(unMeth, meth);
+  ##Do QN over samples after M-val2?
+  if(betweenSampleCorrection==TRUE){
+    normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
+    rownames(normalizedBeta2) <- rownames(normalizedBeta)
+    colnames(normalizedBeta2) <- colnames(normalizedBeta)
+    normalizedBeta <- normalizedBeta2
+    rm(normalizedBeta2)
+  }
+  
+  if(MvalueConv == FALSE){
+    
+  }
+  
+  #start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)
+  data.norm <- list(normalizedBeta, detect.pval)
+  
+  names(data.norm) <- c("beta", "detection.pvalue")
+  cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
+  
+  return(data.norm)
 }

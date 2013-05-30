@@ -150,12 +150,23 @@ probeAnnotationsCategory = "relationToCpG"
 # If QCplot==TRUE, performs and plots hierarchical clustering and plots methylation density curves.
 QCplot=FALSE
 #
-# Select the normalization procedure. Switch between SQN / SWAN / M-Value / DASEN correction and BMIQ. If not give / write error this will default to SQN
+# Select the normalization procedure. Switch between SQN / SWAN / M-Value / M-value2 / DASEN correction and BMIQ. If not give / write error this will default to SQN
+
+#Normalization procedure by Touleimat & Tost.
 #NormProcedure = "SQN"
+#Normalization procedure by Maksimovic et al.
 #NormProcedure = "SWAN"
+#Normalization procedure by Teschendorff et al.
 #NormProcedure = "BMIQ"
+#Normalization procedure by Dedeurwaerder et al. (Based on beta values)
 #NormProcedure = "M-ValCor"
-NormProcedure = "DASEN"
+#Normalization procedure by Dedeurwaerder et al. (Based on m-values directly.)
+NormProcedure = "M-ValCor2"
+#Normalization procedure by Pidsley et al.
+#NormProcedure = "DASEN"
+
+#When using M-val do a Median replacement for missing values.
+medianReplacement = TRUE;
 
 #Set alfa, used during transformation from U + M to Beta value
 alfa = 100
@@ -165,6 +176,8 @@ betweenSampleCorrection = FALSE
 
 # Do M-value conversion.
 MvalueConv = FALSE
+
+
 
 #
 ##############################################
@@ -236,7 +249,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
   data.preprocess.norm <- NULL
   print(paste(NormProcedure ,"normalization procedure"))
-  if(NormProcedure != "SWAN" && NormProcedure != "DASEN"){
+  if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2"){
     data.preprocess.norm <- pipelineIlluminaMethylation.batch(
       PATH_PROJECT_DATA,
       projectName = projectName,
@@ -255,7 +268,8 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       QCplot = QCplot,
       betweenSampleCorrection = betweenSampleCorrection,
       alfa,
-      NormProcedure
+      NormProcedure,
+      medianReplacement
     )
   } else {
     data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
@@ -276,7 +290,9 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       QCplot = QCplot,
       betweenSampleCorrection = betweenSampleCorrection,
       alfa,
-      NormProcedure
+      NormProcedure,
+      medianReplacement,
+      MvalueConv
     )
   }
   
@@ -289,13 +305,13 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 	detection.pvalue <- data.preprocess.norm$detection.pvalue
 	
   if(MvalueConv){
-    
-    for(i in 1:ncol(beta)){
-      beta1 <- beta[,i]
-      m1 <- log2(beta1/(1 - beta1))  
-      beta[,i] <- m1
+    if(NormProcedure != "M-ValCor2"){
+      for(i in 1:ncol(beta)){
+        beta1 <- beta[,i]
+        m1 <- log2(beta1/(1 - beta1))  
+        beta[,i] <- m1
+      }
     }
-    
     
     write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
     #write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
@@ -303,6 +319,13 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
     #save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
     
   } else {
+    if(NormProcedure == "M-ValCor2"){
+      for(i in 1:ncol(beta)){
+        beta1 <- beta[,i]
+        tmp1 <- 2^beta1/(2^beta1+1)
+        beta[,i] <- tmp1
+      }
+    }
     write.table(beta, file=paste(PATH_RES, projectName, "_beta.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
     write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
     #save(beta, file=paste(PATH_RES, projectName, "_beta.RData", sep=""))

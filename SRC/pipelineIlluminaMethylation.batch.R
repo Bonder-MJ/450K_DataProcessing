@@ -22,7 +22,8 @@ pipelineIlluminaMethylation.batch <- function(
 	QCplot=TRUE,
 	betweenSampleCorrection = betweenSampleCorrection,
 	alfa=100,
-	NormProcedure
+	NormProcedure,
+	medianReplacement
  ){
 
 	####################################
@@ -257,7 +258,8 @@ pipelineIlluminaMethylation.batch <- function(
 			probeAnnotationsCategory = probeAnnotationsCategory,
 			QCplot = QCplot,
 			PATH_RES,
-			betweenSampleCorrection = betweenSampleCorrection
+			betweenSampleCorrection = betweenSampleCorrection,
+			medianReplacement
 		)
 	} else {
 		data.preprocess.norm <- normalizeIlluminaMethylationSQN(
@@ -292,7 +294,9 @@ pipelineIlluminaMethylation.batch2 <- function(
 	QCplot=TRUE,
 	betweenSampleCorrection = TRUE,
 	alfa=100,
-	NormProcedure
+	NormProcedure,
+	medianReplacement = TRUE,
+	MvalueConv
  ){
 
 	####################################
@@ -456,7 +460,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 		################################################
 
     if(readFromOriginalInput==TRUE && readFromIdat==TRUE){
-      cat("Warning: In SWAN & DASEN preprocessing no mixing of input types is allowed.\n")
+      cat("Warning: In SWAN & DASEN & M-ValCor2 preprocessing no mixing of input types is allowed.\n")
       return(NULL)
     }
     
@@ -595,6 +599,19 @@ pipelineIlluminaMethylation.batch2 <- function(
       alfa,
 			betweenSampleCorrection = betweenSampleCorrection
 		)
+	} else if(NormProcedure=="M-ValCor2"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationMValCor2(
+	    unMeth,
+	    meth,
+      detect.pval = detectionPval,
+	    annotation,
+	    QCplot,
+	    PATH_RES,
+	    alfa,
+	    betweenSampleCorrection = betweenSampleCorrection,
+	    MvalueConv,
+	    medianReplacement
+	  )
 	} else {
 		data.preprocess.norm <- normalizeIlluminaMethylationDASEN(
 			detect.pval = detectionPval,

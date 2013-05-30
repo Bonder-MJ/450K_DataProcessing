@@ -6,8 +6,13 @@
 # www.landesbioscience.com/journals/epigenetics/2012EPI0192R1.pdf #
 ###################################################################
 
-MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE){
+MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE, medianReplacement=TRUE){
 
+	if(medianReplacement){
+		medianD1 <- median(which(is.numeric(data1)))
+		data1[which(!is.numeric(data1))] <- medianD1
+	}
+	
 	data1 <- cbind(rownames(data1), as.data.frame(data1))
 	colnames(data1)[1] <- as.character(colnames(type1)[idNameY])
 	id1 = which(colnames(type1)=="INFINIUM_DESIGN_TYPE")
@@ -20,8 +25,8 @@ MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE){
 	
 	head(data1); dim(data1)
 
-	naidx <- apply(is.na(data1), 1, sum)
-	data1 <- data1[which(naidx == 0),]
+	naidx <- apply(beta, 1, function(x){ return(all(is.numeric(x)))})
+	data1 <- data1[which(naidx==TRUE),]
 	row_size <- dim(data1)[1]
 	col_size <- dim(data1)[2] - 1
 	idx1 <- which(data1$INFINIUM_DESIGN_TYPE=='I')
@@ -83,3 +88,88 @@ MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE){
 	
 	return(beta1_corrected)
 }
+
+MvalType2Cor2 <- function(dataU, dataM, type1, idNameY = 1, alfa, PATH_RES, QCplot=FALSE, medianReplacement=TRUE){
+	options(warn=-1)
+	data1 <- log2(dataM+alfa/dataU+alfa)
+	
+	if(medianReplacement){
+		medianD1 <- median(which(is.numeric(data1)))
+		data1[which(!is.numeric(data1))] <- medianD1
+	}
+	options(warn=0)
+	rm(dataU, dataM)
+	
+	data1 <- cbind(rownames(data1), as.data.frame(data1))
+	colnames(data1)[1] <- as.character(colnames(type1)[idNameY])
+	id1 = which(colnames(type1)=="INFINIUM_DESIGN_TYPE")
+	NameY = as.character(colnames(type1)[idNameY])
+	type1 <- as.data.frame(type1[,c(idNameY, id1)])
+	
+	data1 <- merge(data1, type1, by.x=NameY, by.y= NameY)
+	
+	rm(type1, NameY, id1);
+	
+	head(data1); dim(data1)
+
+	naidx <- apply(beta, 1, function(x){ return(all(is.numeric(x)))})
+	data1 <- data1[which(naidx==TRUE),]
+	print(dim(data1))
+	row_size <- dim(data1)[1]
+	col_size <- dim(data1)[2] - 1
+	idx1 <- which(data1$INFINIUM_DESIGN_TYPE=='I')
+	idx2 <- which(data1$INFINIUM_DESIGN_TYPE=='II')
+	M_typeI_probe <- as.character(data1[idx1,1])
+	M_typeII_probe <- as.character(data1[idx2,1])
+	len <- length(colnames(data1))
+	M_corrected <- c(as.character(M_typeI_probe), as.character(M_typeII_probe))
+
+	for (i in 2:col_size){
+		
+		Mval1 <- data1[,i] #one sample
+		
+		cat(colnames(data1)[i], "; ")
+		m1 <- Mval1[idx1]
+		m2 <- Mval1[idx2]
+		probe_typeII <- length(m2)
+		
+		if(QCplot){
+			pdf(paste(PATH_RES, "./QC_Plot_" , (i-1), ".pdf", sep=""))
+			#plot the density of typeI and typeII beta value.
+			#dev.new(1)
+			
+			par(mfrow=c(2,1))
+			plot(density(m2, bw=0.5, kernel="gaussian", n=200, na.rm=TRUE), col='red', main='Fig1: M value for typeI and typeII(red)')
+			lines(density(m1, bw=0.5, kernel="gaussian", n=200, na.rm=TRUE))
+		}
+		#typeI M-value as the base.
+		dm1 <- density(m1, bw=0.5, kernel="gaussian", n=200, na.rm=TRUE)
+		sigma_m1 <- dm1$x[which.max(dm1$y[dm1$x >= 0])+ length(dm1$x[dm1$x < 0])]
+		sigma_u1 <- dm1$x[which.max(dm1$y[dm1$x < 0])]
+		cat(sigma_m1, "; ", sigma_u1, "\n")
+		
+		#######adjust typeII M value according to typeI
+		dm2 <- density(m2, bw=0.5, kernel="gaussian", n=200, na.rm=TRUE)
+		sigma_m2 <- dm2$x[which.max(dm2$y[dm2$x >= 0])+ length(dm2$x[dm2$x < 0])]
+		sigma_u2 <- dm2$x[which.max(dm2$y[dm2$x < 0])]
+		cat(sigma_m2, "; ", sigma_u2, "\n")
+		mm2 <- rep(0, probe_typeII)
+		idx11 <- which(m2 >= 0)
+		idx22 <- which(m2 < 0)
+		
+		mm2[idx11]<- (m2[idx11]/sigma_m2)*sigma_m1
+		mm2[idx22]<- (m2[idx22]/sigma_u2)*sigma_u1
+		
+		if(QCplot){
+			plot(density(mm2,bw=0.5, kernel="gaussian", n=200, na.rm=TRUE), col='red', main="Fig2. M value in typeI and adjust typeII(red)")
+			lines(density(m1, bw=0.5, kernel="gaussian", n=200, na.rm=TRUE))
+			dev.off()
+		}
+		
+		temp <- c(m1, mm2)
+		M_corrected <- data.frame(M_corrected, temp)
+	}
+	
+	return(M_corrected)
+}
+
