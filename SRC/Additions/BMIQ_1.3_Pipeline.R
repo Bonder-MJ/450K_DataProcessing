@@ -1,7 +1,9 @@
 ### BMIQ.R & CheckBMIQ.R
 ### This function adjusts for the type-2 bias in Illumina Infinium 450k data.
 ### Author: Andrew Teschendorff
-### Date: 26th Nov 2012
+### Date v_1.1: Nov 2012
+### Date v_1.2: 6th Apr 2013
+### Date v_1.3: 29th May 2013
 
 ### SUMMARY
 ### BMIQ is an intra-sample normalisation procedure, adjusting for the bias in type-2 probe values, using a 3-step procedure published in Teschendorff AE et al "A Beta-Mixture Quantile Normalisation method for correcting probe design bias in Illumina Infinium 450k DNA methylation data", Bioinformatics 2012 Nov 21.
@@ -12,7 +14,7 @@
 ### design.v: corresponding vector specifying probe design type (I=type1,II=type2). This must be of the same length as beta.v and in the same order.
 ### nL: number of states in beta mixture model. 3 by default. At present BMIQ only works for nL=3.
 ### doH: perform normalisation for hemimethylated type2 probes. By default TRUE.
-### nfit: number of probes of a given design to use for the fitting. Default is 50000. Smaller values (~10000) will make BMIQ run faster at the expense of a small loss in accuracy. For most applications, 10000 is ok.
+### nfit: number of probes of a given design to use for the fitting. Default is 10000. Smaller values will make BMIQ run faster at the expense of a small loss in accuracy. For most applications, even 5000 is ok.
 ### th1.v: thresholds used for the initialisation of the EM-algorithm, they should represent best guesses for calling type1 probes hemi-methylated and methylated, and will be refined by the EM algorithm. Default values work well in most cases.
 ### th2.v: thresholds used for the initialisation of the EM-algorithm, they should represent best guesses for calling type2 probes hemi-methylated and methylated, and will be refined by the EM algorithm. By default this is null, and the thresholds are estimated based on th1.v and a modified PBC correction method.
 ### niter: maximum number of EM iterations to do. By default 5.
@@ -33,26 +35,25 @@
 
 require(RPMM);
 
-BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.v=NULL,niter=5,tol=0.001,plots=TRUE,sampleID=1){
+BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=10000,th1.v=c(0.2,0.75),th2.v=NULL,niter=5,tol=0.001,plots=TRUE,sampleID=1){
 
 	type1.idx <- which(design.v=="I");
 	type2.idx <- which(design.v=="II");
-
 	beta1.v <- beta.v[type1.idx];
 	beta2.v <- beta.v[type2.idx];
 
 	### check if there are exact 0's or 1's. If so, regularise using minimum positive and maximum below 1 values.
 	if(min(beta1.v)==0){
-	  beta1.v[beta1.v==0] <- min(setdiff(beta1.v,0));
+		beta1.v[beta1.v==0] <- min(setdiff(beta1.v,0));
 	}
 	if(min(beta2.v)==0){
-	  beta2.v[beta2.v==0] <- min(setdiff(beta2.v,0));
+		beta2.v[beta2.v==0] <- min(setdiff(beta2.v,0));
 	}
 	if(max(beta1.v)==1){
-	  beta1.v[beta1.v==1] <- max(setdiff(beta1.v,1));
+		beta1.v[beta1.v==1] <- max(setdiff(beta1.v,1));
 	}
 	if(max(beta2.v)==1){
-	  beta2.v[beta2.v==1] <- max(setdiff(beta2.v,1));
+		beta2.v[beta2.v==1] <- max(setdiff(beta2.v,1));
 	}
 	### estimate initial weight matrix from type1 distribution
 	w0.m <- matrix(0,nrow=length(beta1.v),ncol=nL);
@@ -90,9 +91,7 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 		legend(x=0.5,y=3,legend=c("obs","fit"),fill=c("black","green"),bty="n");
 		dev.off();
 	}
-
 	### Estimate Modes 
-	table(class1.v)
 	d1U.o <- density(beta1.v[class1.v==1])
 	d1M.o <- density(beta1.v[class1.v==3])
 	mod1U <- d1U.o$x[which.max(d1U.o$y)]
@@ -101,7 +100,6 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 	d2M.o <- density(beta2.v[which(beta2.v>0.6)]);
 	mod2U <- d2U.o$x[which.max(d2U.o$y)]
 	mod2M <- d2M.o$x[which.max(d2M.o$y)]
-
 
 	### now deal with type2 fit
 	th2.v <- vector();
@@ -126,13 +124,12 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 	class2.v[which(beta2.v < subsetth2.v[1])] <- 1;
 	class2.v[which(beta2.v > subsetth2.v[2])] <- 3;
 
-
 	### generate plot
 	if(plots){
 		tmpL.v <- as.vector(rmultinom(1:nL,length(beta2.v),prob=em2.o$eta));
 		tmpB.v <- vector();
 		for(lt in 1:nL){
-		  tmpB.v <- c(tmpB.v,rbeta(tmpL.v[lt],em2.o$a[lt,1],em2.o$b[lt,1]));
+			tmpB.v <- c(tmpB.v,rbeta(tmpL.v[lt],em2.o$a[lt,1],em2.o$b[lt,1]));
 		}
 		pdf(paste("Type2fit-",sampleID,".pdf",sep=""),width=6,height=4);
 		plot(density(beta2.v));
@@ -144,8 +141,8 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 
 	classAV1.v <- vector();classAV2.v <- vector();
 	for(l in 1:nL){
-	  classAV1.v[l] <-  em1.o$mu[l,1];
-	  classAV2.v[l] <-  em2.o$mu[l,1];
+		classAV1.v[l] <-  em1.o$mu[l,1];
+		classAV2.v[l] <-  em2.o$mu[l,1];
 	}
 
 	### start normalising type2 probes
@@ -177,7 +174,6 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 	q.v <- qbeta(p.v,em1.o$a[lt,1],em1.o$b[lt,1],lower.tail=FALSE);
 	nbeta2.v[selMR.idx] <- q.v;
 
-
 	if(doH){ ### if TRUE also correct type2 hemimethylated probes
 		### select H probes and include ML probes (left ML tail is not well described by a beta-distribution).
 		lt <- 2;
@@ -200,7 +196,6 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 		hf <- ndeltaH/deltaH ;
 		### fix lower point first
 		nbeta2.v[selH.idx] <- nminH + hf*(beta2.v[selH.idx]-minH);
-
 	}
 
 	pnbeta.v <- beta.v;
@@ -229,7 +224,6 @@ BMIQ <- function(beta.v,design.v,nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.
 		return(list(nbeta=pnbeta.v,class1=class1.v,class2=class2.v,av1=classAV1.v,av2=classAV2.v,1,th1=nth1.v,th2=th2.v));
 	}
 }
-
 
 
 CheckBMIQ <- function(beta.v,design.v,pnbeta.v){### pnbeta is BMIQ normalised profile
