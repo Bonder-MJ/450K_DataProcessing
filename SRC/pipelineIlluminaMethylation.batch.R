@@ -590,8 +590,8 @@ pipelineIlluminaMethylation.batch2 <- function(
 	
 	write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
-	if(NormProcedure=="SWAN"){
-		data.preprocess.norm <- normalizeIlluminaMethylationSWAN(
+	if(NormProcedure=="SWAN" && MvalueConv){
+		data.preprocess.norm <- normalizeIlluminaMethylationSWAN2(
 			detect.pval = detectionPval,
 			unMeth,
 			meth,
@@ -599,6 +599,15 @@ pipelineIlluminaMethylation.batch2 <- function(
       alfa,
 			betweenSampleCorrection = betweenSampleCorrection
 		)
+	} else if(NormProcedure=="SWAN"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationSWAN(
+	    detect.pval = detectionPval,
+	    unMeth,
+	    meth,
+	    qc,
+	    alfa,
+	    betweenSampleCorrection = betweenSampleCorrection
+	  )
 	} else if(NormProcedure=="M-ValCor2"){
 	  data.preprocess.norm <- normalizeIlluminaMethylationMValCor2(
 	    unMeth,

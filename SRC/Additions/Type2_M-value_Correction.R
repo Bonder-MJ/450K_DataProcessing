@@ -97,7 +97,7 @@ MvalType2Cor2 <- function(dataU, dataM, type1, idNameY = 1, alfa, PATH_RES, QCpl
 		medianD1 <- median(which(is.numeric(data1)))
 		data1[which(!is.numeric(data1))] <- medianD1
 	}
-	options(warn=0)
+	
 	rm(dataU, dataM)
 	
 	data1 <- cbind(rownames(data1), as.data.frame(data1))
@@ -169,7 +169,7 @@ MvalType2Cor2 <- function(dataU, dataM, type1, idNameY = 1, alfa, PATH_RES, QCpl
 		temp <- c(m1, mm2)
 		M_corrected <- data.frame(M_corrected, temp)
 	}
-	
+	options(warn=0)
 	return(M_corrected)
 }
 

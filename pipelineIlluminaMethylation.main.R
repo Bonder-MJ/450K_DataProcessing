@@ -125,7 +125,7 @@ nbBeads.threshold = 3
 detectionPval.threshold = 0.01
 #
 # Percentage of significant probe methylation signals in a given sample (by default, >80% for "good quality" samples). This is used for samples QC and filtering. All samples that do not respect this condition will be removed from the analysis.
-detectionPval.perc.threshold = 97
+detectionPval.perc.threshold = 90
 #
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
 sampleSelection = FALSE
@@ -155,13 +155,13 @@ QCplot=FALSE
 #Normalization procedure by Touleimat & Tost.
 #NormProcedure = "SQN"
 #Normalization procedure by Maksimovic et al.
-#NormProcedure = "SWAN"
+NormProcedure = "SWAN"
 #Normalization procedure by Teschendorff et al.
 #NormProcedure = "BMIQ"
 #Normalization procedure by Dedeurwaerder et al. (Based on beta values)
 #NormProcedure = "M-ValCor"
 #Normalization procedure by Dedeurwaerder et al. (Based on m-values directly.)
-NormProcedure = "M-ValCor2"
+#NormProcedure = "M-ValCor2"
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
 
@@ -175,7 +175,7 @@ alfa = 100
 betweenSampleCorrection = FALSE
 
 # Do M-value conversion.
-MvalueConv = FALSE
+MvalueConv = TRUE
 
 
 
@@ -305,7 +305,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 	detection.pvalue <- data.preprocess.norm$detection.pvalue
 	
   if(MvalueConv){
-    if(NormProcedure != "M-ValCor2"){
+    if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN"){
       for(i in 1:ncol(beta)){
         beta1 <- beta[,i]
         m1 <- log2(beta1/(1 - beta1))  
