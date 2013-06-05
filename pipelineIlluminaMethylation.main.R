@@ -84,16 +84,10 @@
 ### PATHs to files and folders
 #
 # set PATH to R pipeline's scripts for script sourcing
-setwd("d:/UMCG/450K_pipeline_Nov2012release/")
-memory.limit(20000)
 PATH_SRC <- "./SRC/"
 #
 # set PATH to results folder
-#PATH_RES <- "./RES_Muscle_SWan_NoQN/"
-#PATH_RES <- "./KI_RES_BMIQ/"
-#PATH_RES <- "./RES_KI_SQN/"
 PATH_RES <- "./RES_test/"
-#PATH_RES <- "./KI_RES_SWAN/Comp3"
 
 #
 # set PATH to a folder of "projects" where each project corresponds to a folder of 450K plate extracted data : control probes methylation informations, raw sample methylation informations (data extracted with GenomeStudio) and eventually a sample IDs list to select. Only subfolders for plates can exist, otherwise the program will try to open any existing file as folder and crash.
@@ -107,8 +101,8 @@ PATH_RES <- "./RES_test/"
 PATH_PROJECT_DATA <- "./DATA_test/"
 
 #
-# set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays.
-PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", "./ADDITIONAL_INFO/ProbeFiltering/ProbesBindingNonOptimal/ProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt")
+# set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
+PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", "./ADDITIONAL_INFO/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt")
 #PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt"
 #PATH_ProbeSNP_LIST <- NULL
 #
