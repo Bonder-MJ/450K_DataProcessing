@@ -86,6 +86,8 @@
 ##############################
 #
 ### PATHs to files and folders
+# set working directory
+setwd("")
 #
 # set PATH to R pipeline's scripts for script sourcing
 PATH_SRC <- "./SRC/"
