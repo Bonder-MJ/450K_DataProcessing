@@ -1,17 +1,21 @@
-# 2011-2012
+# 2011-2012-2013
 # Nizar TOULEIMAT
 # nizar.touleimat @ cng.com
+# Marc Jan Bonder
+# m.j.bonder @ umcg.nl
 #
 #######################
 #### TO READ FIRST ####
 #######################
-# setwd("d:/UMCG/450K_pipeline_Nov2012release/")
 # This script, when sourced ( source("pipelineIlluminaMethylation.main.R") ), loads raw methylation data and performs a complete preprocessing and normalization of a batch of Illumina 450K data (corresponding to different plates).
 #
 #################
 # Pre-requisites:
 # - install last 'lumi' and 'methylumi' bioconductor packages
-# - data format:
+#	- all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "compiler"
+# - data format (1 raw data):
+#	- raw idat files
+# - data format (2 genomestudio):
 #	- raw methylation data: methylation data have to be extracted with GenomeStudio in two text files, one corresponding to sample methylation informations and the second one to control probe informations.
 #		- sample methylation informations: must contain the following columns in addition to the columns pre-selected by GenomeStudio(before exporting to '.txt' files the extracted informations).
 #  		. Index
@@ -19,7 +23,7 @@
 #			. INFINIUM_DESIGN_TYPE
 #			. Color_Channel
 #			. CHR
-#			. Mapinfo (probe position for hg19)
+#			. Mapinfo (probe position for hg19
 #			. COORDINATE_36 (probe position for hg18)
 #			. STRAND
 #			. Probe_SNPS
@@ -46,7 +50,7 @@
 # PIPELINE'S STEPS #
 ####################
 #
-# 0. Extract methylation data with annotation informations with GenomeStudio software.
+# (optional) Extract methylation data with annotation informations with GenomeStudio software.
 # 1. Check that methylation data files and additionnal information files have the required format.
 # 2. Open R environment (R console).
 # 3. Increase the memory that R can use. In Windows, use the command 'memory.limit(20000)' for example.
@@ -87,8 +91,7 @@
 PATH_SRC <- "./SRC/"
 #
 # set PATH to results folder
-PATH_RES <- "./RES_test/"
-
+PATH_RES <- "./RES/"
 #
 # set PATH to a folder of "projects" where each project corresponds to a folder of 450K plate extracted data : control probes methylation informations, raw sample methylation informations (data extracted with GenomeStudio) and eventually a sample IDs list to select. Only subfolders for plates can exist, otherwise the program will try to open any existing file as folder and crash.
 # requirement for data file naming :
@@ -96,9 +99,7 @@ PATH_RES <- "./RES_test/"
 #	- raw sample methylation file: file name must starts with the pattern "TableSample"
 #	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList"
 
-#PATH_PROJECT_DATA <- "./DATA_KI/"
-#PATH_PROJECT_DATA <- "./DATA/"
-PATH_PROJECT_DATA <- "./DATA_test/"
+PATH_PROJECT_DATA <- "./DATA/"
 
 #
 # set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
@@ -171,7 +172,8 @@ betweenSampleCorrection = FALSE
 # Do M-value conversion.
 MvalueConv = TRUE
 
-
+# Write Rdata / txt / both
+outputType = "txt"
 
 #
 ##############################################
@@ -307,11 +309,14 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
       }
     }
     
-    write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
-    #write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
-    #save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
-    #save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
-    
+	if("txt" || "both"){
+		write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+		write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
+	}
+	if("Rdata" || "both"){
+		save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
+		save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
+    }
   } else {
     if(NormProcedure == "M-ValCor2"){
       for(i in 1:ncol(beta)){
@@ -320,11 +325,15 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
         beta[,i] <- tmp1
       }
     }
-    write.table(beta, file=paste(PATH_RES, projectName, "_beta.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
-    write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
-    #save(beta, file=paste(PATH_RES, projectName, "_beta.RData", sep=""))
-    #save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
-    
+	
+	if("txt" || "both"){
+		write.table(beta, file=paste(PATH_RES, projectName, "_beta.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+		write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
+	}
+	if("Rdata" || "both"){
+		save(beta, file=paste(PATH_RES, projectName, "_beta.RData", sep=""))
+		save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
+    }
   }
 	
 	if(QCplot){
