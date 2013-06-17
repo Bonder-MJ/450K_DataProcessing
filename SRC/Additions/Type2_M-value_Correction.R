@@ -25,7 +25,7 @@ MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE, medi
 	
 	head(data1); dim(data1)
 
-	naidx <- apply(beta, 1, function(x){ return(all(is.numeric(x)))})
+	naidx <- apply(data1, 1, function(x){ return(all(is.numeric(x)))})
 	data1 <- data1[which(naidx==TRUE),]
 	row_size <- dim(data1)[1]
 	col_size <- dim(data1)[2] - 1
@@ -112,7 +112,7 @@ MvalType2Cor2 <- function(dataU, dataM, type1, idNameY = 1, alfa, PATH_RES, QCpl
 	
 	head(data1); dim(data1)
 
-	naidx <- apply(beta, 1, function(x){ return(all(is.numeric(x)))})
+	naidx <- apply(data1, 1, function(x){ return(all(is.numeric(x)))})
 	data1 <- data1[which(naidx==TRUE),]
 	print(dim(data1))
 	row_size <- dim(data1)[1]
