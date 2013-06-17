@@ -150,48 +150,6 @@ normalizeIlluminaMethylationBMIQ <- function(
 	return(data.norm)
 }
 
-normalizeIlluminaMethylationMValCor <- function(
-	beta,
-	detect.pval,
-	quantile.norm.pvalThreshold = 0.01,
-	probeAnnotations,
-	probeAnnotationsCategory = "relationToCpG",
-	QCplot = TRUE,
-	PATH_RES,
-	betweenSampleCorrection = FALSE,
-	medianReplacement = TRUE
-	)
-{	
-	
-	MValAnnotation <- cbind(rownames(probeAnnotations), as.character(probeAnnotations$INFINIUM_DESIGN_TYPE))
-	colnames(MValAnnotation) <- c("TargetID", "INFINIUM_DESIGN_TYPE")
-	#loop through all samples
-	rm(probeAnnotations)
-	
-	normalizedBeta <- MvalType2Cor(data1=beta, type1=MValAnnotation, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
-	rownames(normalizedBeta) <- normalizedBeta[,1]
-	normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
-	colnames(normalizedBeta) <- colnames(beta)
-	
-	rm(beta);
-	##Do QN over samples after normalization?
-	if(betweenSampleCorrection==TRUE){
-		normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
-		rownames(normalizedBeta2) <- rownames(normalizedBeta)
-		colnames(normalizedBeta2) <- colnames(normalizedBeta)
-		normalizedBeta <- normalizedBeta2
-		rm(normalizedBeta2)
-	}
-	
-	#start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)
-	data.norm <- list(normalizedBeta, detect.pval)
-	
-	names(data.norm) <- c("beta", "detection.pvalue")
-	cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
-
-	return(data.norm)
-}
-
 normalizeIlluminaMethylationDASEN <- function(
 	detect.pval,
 	unMeth,
@@ -203,9 +161,19 @@ normalizeIlluminaMethylationDASEN <- function(
 	betweenSampleCorrection = TRUE
 	)
 {	
-	
-	
-	normalizedBeta <- dasen(unMeth, meth, annotation$INFINIUM_DESIGN_TYPE, MvalueConv)
+
+	ann <- as.array((annotation$INFINIUM_DESIGN_TYPE))
+	rownames(ann) <- annotation$TargetID
+  keepList <- which(rownames(ann) %in% rownames(unMeth))
+	ann <- ann[keepList]
+  
+  unMeth <- unMeth[order(rownames(unMeth)),]
+	meth <- meth[order(rownames(meth)),]
+	ann <- ann[order(rownames(ann))]
+  
+  rm(annotation, keepList)
+  
+	normalizedBeta <- dasen(uns=unMeth, mns=meth, onetwo=ann, MvalueConv=MvalueConv)
 	
 	if(any(is.na(normalizedBeta))){
 		for(i in 1: ncol(normalizedBeta)){
@@ -232,6 +200,48 @@ normalizeIlluminaMethylationDASEN <- function(
 	cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
 		
 	return(data.norm)
+}
+
+normalizeIlluminaMethylationMValCor <- function(
+  beta,
+  detect.pval,
+  quantile.norm.pvalThreshold = 0.01,
+  probeAnnotations,
+  probeAnnotationsCategory = "relationToCpG",
+  QCplot = TRUE,
+  PATH_RES,
+  betweenSampleCorrection = FALSE,
+  medianReplacement = TRUE
+)
+{	
+  
+  MValAnnotation <- cbind(rownames(probeAnnotations), as.character(probeAnnotations$INFINIUM_DESIGN_TYPE))
+  colnames(MValAnnotation) <- c("TargetID", "INFINIUM_DESIGN_TYPE")
+  #loop through all samples
+  rm(probeAnnotations)
+  
+  normalizedBeta <- MvalType2Cor(data1=beta, type1=MValAnnotation, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
+  rownames(normalizedBeta) <- normalizedBeta[,1]
+  normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
+  colnames(normalizedBeta) <- colnames(beta)
+  
+  rm(beta);
+  ##Do QN over samples after normalization?
+  if(betweenSampleCorrection==TRUE){
+    normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
+    rownames(normalizedBeta2) <- rownames(normalizedBeta)
+    colnames(normalizedBeta2) <- colnames(normalizedBeta)
+    normalizedBeta <- normalizedBeta2
+    rm(normalizedBeta2)
+  }
+  
+  #start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)
+  data.norm <- list(normalizedBeta, detect.pval)
+  
+  names(data.norm) <- c("beta", "detection.pvalue")
+  cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
+  
+  return(data.norm)
 }
 
 normalizeIlluminaMethylationMValCor2 <- function(

@@ -33,6 +33,7 @@ pipelineIlluminaMethylation.batch <- function(
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
 	beta <- NULL
+	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
 	
@@ -306,6 +307,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
 	beta <- NULL
+	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
 	
@@ -479,6 +481,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 			#select "useful" probe annotations
 			annotation <- fData(methLumi_data) ; rm(methLumi_data)
 			index <- which(is.element(colnames(annotation), c("TargetID", "INFINIUM_DESIGN_TYPE", "RELATION_TO_UCSC_CPG_ISLAND", "UCSC_REFGENE_GROUP")))
+      
 			annotation <- annotation[,index]
 		} else if(length(sampleNames(methLumi_data))>0){
       print(dim(methLumi_data))
@@ -629,7 +632,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 			annotation,
 			alfa,
 			MvalueConv,
-			betweenSampleCorrection = betweenSampleCorrection,
+			betweenSampleCorrection = betweenSampleCorrection
 		)
 	}
 

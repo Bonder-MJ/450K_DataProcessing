@@ -12,7 +12,7 @@
 #################
 # Pre-requisites:
 # - install last 'lumi' and 'methylumi' bioconductor packages
-#	- all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "compiler"
+# - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "compiler"
 # - data format (1 raw data):
 #	- raw idat files
 # - data format (2 genomestudio):
