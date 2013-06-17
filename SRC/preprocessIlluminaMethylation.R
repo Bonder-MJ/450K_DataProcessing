@@ -85,13 +85,20 @@ preprocessIlluminaMethylation <- function(
 	}
 	
 # XY chz filtering
-	if(XY.filtering){
+	if(tolower(XY.filtering)=="autosomal"){
 	  i <- i+1
 	  cat(" Step ", i, ": start elimination of X & Y chr. probes...\n")
 	  methLumi_data <- filterXY(methLumi_data)
 	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
 	  cat("\t...done.\n\n")
+	}else if(tolower(XY.filtering)=="allosomal"){
+	  i <- i+1
+	  cat(" Step ", i, ": start elimination of none X & Y chr. probes...\n")
+	  methLumi_data <- filterNoneXY(methLumi_data)
+	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
+	  cat("\t...done.\n\n")
 	}
+	
   
 # nbBeads filtering
 	if(!is.null(nbBeads.threshold)){
@@ -226,10 +233,16 @@ preprocessIlluminaMethylationIdat <- function(
   }
   
   # XY chz filtering
-  if(XY.filtering){
+  if(tolower(XY.filtering)=="autosomal"){
     i <- i+1
     cat(" Step ", i, ": start elimination of X & Y chr. probes...\n")
     methLumi_dataTmpData <- filterXY(methLumi_dataTmpData)
+    cat("\t Data dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
+    cat("\t...done.\n\n")
+  }else if(tolower(XY.filtering)=="allosomal"){
+    i <- i+1
+    cat(" Step ", i, ": start elimination of none X & Y chr. probes...\n")
+    methLumi_dataTmpData <- filterNoneXY(methLumi_dataTmpData)
     cat("\t Data dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
     cat("\t...done.\n\n")
   }

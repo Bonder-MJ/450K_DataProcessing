@@ -127,8 +127,8 @@ detectionPval.perc.threshold = 90
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
 sampleSelection = FALSE
 #
-# if 'TRUE', remove all "allosomal" probes (probes located on X and Y chromosomes).
-XY.filtering = TRUE
+# if "allosomal" only X and Y probes are returned, if "autosomal" only the non X and Y probes are returned. Any other value will return every thing.
+XY.filtering = "autosomal"
 #
 # if 'TRUE' performs a color bias correction of methylated and unmethylated signals.
 colorBias.corr = TRUE
