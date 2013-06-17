@@ -1,3 +1,12 @@
+##################################
+#                                #
+#  Dasen is extracted from the   #
+#       Watermelon package       #
+#                                #
+#  Procedure by Pidsley et al.   #
+#                                #
+##################################
+
 dasen <-
 function(mns, uns, onetwo, alfa=100, ...){
    mnsc <- dfsfit(mns,  onetwo, ...)  
@@ -27,7 +36,7 @@ function(
    )
 ){
 
-   mdf<-apply(mn,2,dfs2,onetwo)
+   mdf<-apply(mn,2,dfs2,onetwo) 
 
    if (! is.null(roco) ) {
       scol  <- as.numeric(substr(roco,6,6))
@@ -42,4 +51,14 @@ function(
    )
    mn[onetwo=='I',] <- mn[onetwo=='I',] - otcor
    mn
+}
+
+dfs2 <-
+function(x, onetwo){  # x is a matrix of intensities
+                              # onetwo is a character vector 
+                              # of same order and length 
+                              # indicating assay I or II 
+   one <- density(x[onetwo=='I'], na.rm=T, n = 2^15, from = 0, to = 5000)
+   two <- density(x[onetwo=='II'],na.rm=T, n = 2^15, from = 0, to = 5000)
+   one$x[which.max(one$y)] - two$x[which.max(two$y)]
 }
