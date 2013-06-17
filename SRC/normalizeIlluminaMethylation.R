@@ -199,12 +199,13 @@ normalizeIlluminaMethylationDASEN <- function(
 	qc,
 	annotation,
 	alfa,
+	MvalueConv,
 	betweenSampleCorrection = TRUE
 	)
 {	
 	
 	
-	normalizedBeta <- dasen(unMeth, meth, annotation$INFINIUM_DESIGN_TYPE)
+	normalizedBeta <- dasen(unMeth, meth, annotation$INFINIUM_DESIGN_TYPE, MvalueConv)
 	
 	if(any(is.na(normalizedBeta))){
 		for(i in 1: ncol(normalizedBeta)){
@@ -242,7 +243,6 @@ normalizeIlluminaMethylationMValCor2 <- function(
   PATH_RES,
   alfa,
   betweenSampleCorrection = FALSE,
-  MvalueConv = FALSE,
   medianReplacement = TRUE
 )
 {	
@@ -266,10 +266,6 @@ normalizeIlluminaMethylationMValCor2 <- function(
     colnames(normalizedBeta2) <- colnames(normalizedBeta)
     normalizedBeta <- normalizedBeta2
     rm(normalizedBeta2)
-  }
-  
-  if(MvalueConv == FALSE){
-    
   }
   
   #start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)

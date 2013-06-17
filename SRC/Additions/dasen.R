@@ -7,34 +7,27 @@
 #                                #
 ##################################
 
-dasen <-
-function(mns, uns, onetwo, alfa=100, ...){
+dasen <- function(mns, uns, onetwo, alfa=100, MvalueConv, ...){
    mnsc <- dfsfit(mns,  onetwo, ...)  
    unsc <- dfsfit(uns,  onetwo, roco=NULL)
    mnsc[onetwo=='I' ,] <- normalize.quantiles(mnsc[onetwo=='I', ])
-   mnsc[onetwo=='II',] <- normalize.quantiles(mnsc[onetwo=='II',])
-
    unsc[onetwo=='I' ,] <- normalize.quantiles(unsc[onetwo=='I', ])
+   
+   mnsc[onetwo=='II',] <- normalize.quantiles(mnsc[onetwo=='II',])
    unsc[onetwo=='II',] <- normalize.quantiles(unsc[onetwo=='II',])
+   
+   if(MvalueConv){
+     
+     return(log2((mnsc+alfa)/(unsc + alfa)))
+   } else{
+     return(mnsc/( mnsc + unsc + alfa ))
+   }
 
-   mnsc/( mnsc + unsc + alfa )
 }
 
 
-dfsfit <-
-function(
-   mn, 
-   onetwo,
-   roco=unlist(
-      data.frame(
-         strsplit(
-            colnames(mn), 
-            '_'
-         ), 
-         stringsAsFactors=FALSE
-      )[2,] 
-   )
-){
+dfsfit <- function(mn, onetwo, 
+	  roco=unlist(data.frame(strsplit(colnames(mn), '_'), stringsAsFactors=FALSE)[2,] )){
 
    mdf<-apply(mn,2,dfs2,onetwo) 
 
@@ -53,11 +46,11 @@ function(
    mn
 }
 
-dfs2 <-
-function(x, onetwo){  # x is a matrix of intensities
-                              # onetwo is a character vector 
-                              # of same order and length 
-                              # indicating assay I or II 
+# x is a matrix of intensities
+# onetwo is a character vector 
+# of same order and length 
+# indicating assay I or II 
+dfs2 <- function(x, onetwo){  
    one <- density(x[onetwo=='I'], na.rm=T, n = 2^15, from = 0, to = 5000)
    two <- density(x[onetwo=='II'],na.rm=T, n = 2^15, from = 0, to = 5000)
    one$x[which.max(one$y)] - two$x[which.max(two$y)]

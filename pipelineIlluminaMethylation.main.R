@@ -303,7 +303,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 	detection.pvalue <- data.preprocess.norm$detection.pvalue
 	
   if(MvalueConv){
-    if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN"){
+    if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN" && NormProcedure != "DASEN"){
       for(i in 1:ncol(beta)){
         beta1 <- beta[,i]
         m1 <- log2(beta1/(1 - beta1))  

@@ -618,7 +618,6 @@ pipelineIlluminaMethylation.batch2 <- function(
 	    PATH_RES,
 	    alfa,
 	    betweenSampleCorrection = betweenSampleCorrection,
-	    MvalueConv,
 	    medianReplacement
 	  )
 	} else {
@@ -628,8 +627,9 @@ pipelineIlluminaMethylation.batch2 <- function(
 			meth,
 			qc,
 			annotation,
-      alfa,
-			betweenSampleCorrection = betweenSampleCorrection
+			alfa,
+			MvalueConv,
+			betweenSampleCorrection = betweenSampleCorrection,
 		)
 	}
 
