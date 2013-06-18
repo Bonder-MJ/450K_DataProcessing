@@ -221,6 +221,11 @@ normalizeIlluminaMethylationMValCor <- function(
   rm(probeAnnotations)
   
   normalizedBeta <- MvalType2Cor(data1=beta, type1=MValAnnotation, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
+  
+  if(is.vector(normalizedBeta)){
+    return(NULL)
+  }
+  
   rownames(normalizedBeta) <- normalizedBeta[,1]
   normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
   colnames(normalizedBeta) <- colnames(beta)
@@ -263,6 +268,10 @@ normalizeIlluminaMethylationMValCor2 <- function(
   rm(probeAnnotations)
   
   normalizedBeta <- MvalType2Cor2(dataU=unMeth , dataM = meth, type1=MValAnnotation, alfa=alfa, PATH_RES=PATH_RES, QCplot=QCplot, medianReplacement=medianReplacement)
+  
+  if(is.vector(normalizedBeta)){
+    return(NULL)
+  }
   
   rownames(normalizedBeta) <- normalizedBeta[,1]
   normalizedBeta <- normalizedBeta[,2:ncol(normalizedBeta)]
