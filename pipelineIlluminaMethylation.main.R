@@ -158,9 +158,11 @@ QCplot=FALSE
 #Normalization procedure by Dedeurwaerder et al. (Based on beta values)
 #NormProcedure = "M-ValCor"
 #Normalization procedure by Dedeurwaerder et al. (Based on m-values directly.)
-NormProcedure = "M-ValCor2"
+#NormProcedure = "M-ValCor2"
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
+#No normalization
+NormProcedure = "None"
 
 #When using M-val do a Median replacement for missing values.
 medianReplacement = FALSE;

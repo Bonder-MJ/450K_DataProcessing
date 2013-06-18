@@ -58,13 +58,12 @@ pipelineIlluminaMethylation.batch <- function(
       barcodes <- unique(barcode)
       
       cat("\n\tStart data loading...\n")
-      
-      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
-      methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
-      
       RG.set <- read.450k.exp(base=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), extended=TRUE)
       NumberOfBeads <- beadcountMJ(RG.set)
       rm(RG.set)
+      
+      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
+      methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
       
       cat("\tProject sample nb: ", length(barcodes), ".\n")
       cat("\tData dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
@@ -252,8 +251,19 @@ pipelineIlluminaMethylation.batch <- function(
 	############################################################################################
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
-	#write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
+	if(NormProcedure == "None"){
+    if(betweenSampleCorrection){
+      beta2 <- normalize.quantiles(as.matrix(beta))
+      rownames(beta2) <- rownames(beta)
+      colnames(beta2) <- colnames(beta)
+      beta <- beta2
+      rm(beta2)
+    }
+    data.preprocess.norm <- list(beta, detect.pval)
+    names(data.preprocess.norm) <- c("beta", "detection.pvalue")
+ 
+	}
 	if(NormProcedure == "BMIQ"){
 		data.preprocess.norm <- normalizeIlluminaMethylationBMIQ(
 			beta = beta,
@@ -618,7 +628,6 @@ pipelineIlluminaMethylation.batch2 <- function(
 	############################################################################################								
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
-	#write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
 	if(NormProcedure=="SWAN" && MvalueConv){
 		data.preprocess.norm <- normalizeIlluminaMethylationSWAN2(
