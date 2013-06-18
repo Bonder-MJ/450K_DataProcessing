@@ -152,24 +152,28 @@ QCplot=FALSE
 #Normalization procedure by Touleimat & Tost.
 #NormProcedure = "SQN"
 #Normalization procedure by Maksimovic et al.
-NormProcedure = "SWAN"
+#NormProcedure = "SWAN"
 #Normalization procedure by Teschendorff et al.
 #NormProcedure = "BMIQ"
 #Normalization procedure by Dedeurwaerder et al. (Based on beta values)
 #NormProcedure = "M-ValCor"
 #Normalization procedure by Dedeurwaerder et al. (Based on m-values directly.)
-#NormProcedure = "M-ValCor2"
+NormProcedure = "M-ValCor2"
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
 
 #When using M-val do a Median replacement for missing values.
-medianReplacement = TRUE;
+medianReplacement = FALSE;
 
 #Set alfa, used during transformation from U + M to Beta value
 alfa = 100
 
-# Do QN after SWAN / BMIQ / M-ValCor"
-betweenSampleCorrection = FALSE
+# Do QN after normalization, on beta values
+betweenSampleCorrection = TRUE
+
+# Do QN before normalization, on the individual chanels
+# This is performed over each sub-project individualy.
+includeQuantileNormOverChanel = FALSE
 
 # Do M-value conversion.
 MvalueConv = TRUE
@@ -229,115 +233,117 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
 #
-	{
-  	if(is.character(PATH_ProbeSNP_LIST)){
-      if(length(PATH_ProbeSNP_LIST)==1){
-        probeSNP_LIST <- unlist(read.table(file=PATH_ProbeSNP_LIST, quote="", sep="\t", header=TRUE))  
-      } else {
-        probeSNP_LIST <- NULL
-        for(id in 1:length(PATH_ProbeSNP_LIST)){
-          probeSNP_LIST <- union(probeSNP_LIST, unlist(read.table(file=PATH_ProbeSNP_LIST[id], quote="", sep="\t", header=TRUE)))
-        }
-      }
-  	} 
-  	else{
+{
+  if(is.character(PATH_ProbeSNP_LIST)){
+    if(length(PATH_ProbeSNP_LIST)==1){
+      probeSNP_LIST <- unlist(read.table(file=PATH_ProbeSNP_LIST, quote="", sep="\t", header=TRUE))  
+    } else {
       probeSNP_LIST <- NULL
-  	}
-	}
+      for(id in 1:length(PATH_ProbeSNP_LIST)){
+        probeSNP_LIST <- union(probeSNP_LIST, unlist(read.table(file=PATH_ProbeSNP_LIST[id], quote="", sep="\t", header=TRUE)))
+      }
+    }
+  } 
+  else{
+    probeSNP_LIST <- NULL
+  }
+}
 #
-  data.preprocess.norm <- NULL
-  print(paste(NormProcedure ,"normalization procedure"))
-  if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2"){
-    data.preprocess.norm <- pipelineIlluminaMethylation.batch(
-      PATH_PROJECT_DATA,
-      projectName = projectName,
-      nbBeads.threshold = nbBeads.threshold,
-      detectionPval.threshold = detectionPval.threshold,
-      detectionPval.perc.threshold = detectionPval.perc.threshold,
-      sampleSelection = sampleSelection,
-      probeSNP_LIST = probeSNP_LIST,
-      XY.filtering = XY.filtering,
-      colorBias.corr = colorBias.corr,
-      average.U.M.Check = average.U.M.Check,
-      minimalAverageChanelValue = minimalAverageChanelValue,
-      maxratioDifference = maxratioDifference,
-      bg.adjust = bg.adjust,
-      PATH = PATH_RES,
-      QCplot = QCplot,
-      betweenSampleCorrection = betweenSampleCorrection,
-      alfa,
-      NormProcedure,
-      medianReplacement
-    )
-  } else {
-    data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
-      PATH_PROJECT_DATA,
-      projectName = projectName,
-      nbBeads.threshold = nbBeads.threshold,
-      detectionPval.threshold = detectionPval.threshold,
-      detectionPval.perc.threshold = detectionPval.perc.threshold,
-      sampleSelection = sampleSelection,
-      probeSNP_LIST = probeSNP_LIST,
-      XY.filtering = XY.filtering,
-      colorBias.corr = colorBias.corr,
-      average.U.M.Check = average.U.M.Check,
-      minimalAverageChanelValue = minimalAverageChanelValue,
-      maxratioDifference = maxratioDifference,
-      bg.adjust = bg.adjust,
-      PATH = PATH_RES,
-      QCplot = QCplot,
-      betweenSampleCorrection = betweenSampleCorrection,
-      alfa,
-      NormProcedure,
-      medianReplacement,
-      MvalueConv
-    )
+data.preprocess.norm <- NULL
+print(paste(NormProcedure ,"normalization procedure"))
+if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2"){
+  data.preprocess.norm <- pipelineIlluminaMethylation.batch(
+    PATH_PROJECT_DATA,
+    projectName = projectName,
+    nbBeads.threshold = nbBeads.threshold,
+    detectionPval.threshold = detectionPval.threshold,
+    detectionPval.perc.threshold = detectionPval.perc.threshold,
+    sampleSelection = sampleSelection,
+    probeSNP_LIST = probeSNP_LIST,
+    XY.filtering = XY.filtering,
+    colorBias.corr = colorBias.corr,
+    average.U.M.Check = average.U.M.Check,
+    minimalAverageChanelValue = minimalAverageChanelValue,
+    maxratioDifference = maxratioDifference,
+    bg.adjust = bg.adjust,
+    PATH = PATH_RES,
+    QCplot = QCplot,
+    betweenSampleCorrection = betweenSampleCorrection,
+    includeQuantileNormOverChanel = includeQuantileNormOverChanel,
+    alfa,
+    NormProcedure,
+    medianReplacement
+  )
+} else {
+  data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
+    PATH_PROJECT_DATA,
+    projectName = projectName,
+    nbBeads.threshold = nbBeads.threshold,
+    detectionPval.threshold = detectionPval.threshold,
+    detectionPval.perc.threshold = detectionPval.perc.threshold,
+    sampleSelection = sampleSelection,
+    probeSNP_LIST = probeSNP_LIST,
+    XY.filtering = XY.filtering,
+    colorBias.corr = colorBias.corr,
+    average.U.M.Check = average.U.M.Check,
+    minimalAverageChanelValue = minimalAverageChanelValue,
+    maxratioDifference = maxratioDifference,
+    bg.adjust = bg.adjust,
+    PATH = PATH_RES,
+    QCplot = QCplot,
+    betweenSampleCorrection = betweenSampleCorrection,
+    includeQuantileNormOverChanel = includeQuantileNormOverChanel,
+    alfa,
+    NormProcedure,
+    medianReplacement,
+    MvalueConv
+  )
+}
+
+if(is.null(data.preprocess.norm)){
+  print("No samples selected")
+  return(0)
+}
+
+beta <- data.preprocess.norm$beta
+detection.pvalue <- data.preprocess.norm$detection.pvalue
+
+if(MvalueConv){
+  if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN" && NormProcedure != "DASEN"){
+    for(i in 1:ncol(beta)){
+      beta1 <- beta[,i]
+      m1 <- log2(beta1/(1 - beta1))  
+      beta[,i] <- m1
+    }
   }
   
-  if(is.null(data.preprocess.norm)){
-    print("No samples selected")
-    return(0)
+  if(outputType=="txt" || outputType=="both"){
+    write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+    write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
   }
+  if(outputType=="Rdata" || outputType=="both"){
+    save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
+    save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
+  }
+} else {
+  if(NormProcedure == "M-ValCor2"){
+    for(i in 1:ncol(beta)){
+      beta1 <- beta[,i]
+      tmp1 <- 2^beta1/(2^beta1+1)
+      beta[,i] <- tmp1
+    }
+  }
+  
+  if(outputType=="txt" || outputType=="both"){
+    write.table(beta, file=paste(PATH_RES, projectName, "_beta.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+    write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
+  }
+  if(outputType=="Rdata" || outputType=="both"){
+    save(beta, file=paste(PATH_RES, projectName, "_beta.RData", sep=""))
+    save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
+  }
+}
 
-	beta <- data.preprocess.norm$beta
-	detection.pvalue <- data.preprocess.norm$detection.pvalue
-	
-  if(MvalueConv){
-    if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN" && NormProcedure != "DASEN"){
-      for(i in 1:ncol(beta)){
-        beta1 <- beta[,i]
-        m1 <- log2(beta1/(1 - beta1))  
-        beta[,i] <- m1
-      }
-    }
-    
-	if(outputType=="txt" || outputType=="both"){
-		write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
-		write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
-	}
-	if(outputType=="Rdata" || outputType=="both"){
-		save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
-		save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
-    }
-  } else {
-    if(NormProcedure == "M-ValCor2"){
-      for(i in 1:ncol(beta)){
-        beta1 <- beta[,i]
-        tmp1 <- 2^beta1/(2^beta1+1)
-        beta[,i] <- tmp1
-      }
-    }
-	
-	if(outputType=="txt" || outputType=="both"){
-		write.table(beta, file=paste(PATH_RES, projectName, "_beta.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
-		write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
-	}
-	if(outputType=="Rdata" || outputType=="both"){
-		save(beta, file=paste(PATH_RES, projectName, "_beta.RData", sep=""))
-		save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
-    }
-  }
-	
-	if(QCplot){
-		plotQC(data.preprocess.norm$beta, figName=paste(projectName, "_beta.preproc.norm", sep=""), PATH = PATH_RES)
-	}
+if(QCplot){
+  plotQC(data.preprocess.norm$beta, figName=paste(projectName, "_beta.preproc.norm", sep=""), PATH = PATH_RES)
+}

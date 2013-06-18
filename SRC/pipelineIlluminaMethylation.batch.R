@@ -21,6 +21,7 @@ pipelineIlluminaMethylation.batch <- function(
 	PATH,
 	QCplot=TRUE,
 	betweenSampleCorrection = betweenSampleCorrection,
+	includeQuantileNormOverChanel = includeQuantileNormOverChanel,
 	alfa=100,
 	NormProcedure,
 	medianReplacement
@@ -183,6 +184,19 @@ pipelineIlluminaMethylation.batch <- function(
 		################################################
 		# Sub-project data & information concatenation #
 		################################################
+    
+    if(includeQuantileNormOverChanel){
+      methLumi_data_un <-normalize.quantiles(as.matrix(unmethylated(methLumi_data)))
+      colnames(methLumi_data_un) <- colnames(unmethylated(methLumi_data))
+      rownames(methLumi_data_un) <- rownames(unmethylated(methLumi_data))
+      unmethylated(methLumi_data) <- methLumi_data_un
+      
+      methLumi_data_me <- normalize.quantiles(as.matrix(methylated(methLumi_data)))
+      colnames(methLumi_data_me) <- colnames(unmethylated(methLumi_data))
+      rownames(methLumi_data_me) <- rownames(unmethylated(methLumi_data))
+      methylated(methLumi_data) <- methLumi_data_me
+      rm(methLumi_data_un, methLumi_data_me)
+    }
 
     if(is.null(beta) && length(sampleNames(methLumi_data))>0){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
@@ -238,7 +252,7 @@ pipelineIlluminaMethylation.batch <- function(
 	############################################################################################
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
-	write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+	#write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
 	if(NormProcedure == "BMIQ"){
 		data.preprocess.norm <- normalizeIlluminaMethylationBMIQ(
@@ -294,6 +308,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	PATH,
 	QCplot=TRUE,
 	betweenSampleCorrection = TRUE,
+	includeQuantileNormOverChanel = includeQuantileNormOverChanel,
 	alfa=100,
 	NormProcedure,
 	medianReplacement = TRUE,
@@ -466,6 +481,19 @@ pipelineIlluminaMethylation.batch2 <- function(
       return(NULL)
     }
     
+    if(includeQuantileNormOverChanel){
+      methLumi_data_un <-normalize.quantiles(as.matrix(unmethylated(methLumi_data)))
+      colnames(methLumi_data_un) <- colnames(unmethylated(methLumi_data))
+      rownames(methLumi_data_un) <- rownames(unmethylated(methLumi_data))
+      unmethylated(methLumi_data) <- methLumi_data_un
+      
+      methLumi_data_me <- normalize.quantiles(as.matrix(methylated(methLumi_data)))
+      colnames(methLumi_data_me) <- colnames(unmethylated(methLumi_data))
+      rownames(methLumi_data_me) <- rownames(unmethylated(methLumi_data))
+      methylated(methLumi_data) <- methLumi_data_me
+      rm(methLumi_data_un, methLumi_data_me)
+    }
+    
 		if(is.null(beta) && length(sampleNames(methLumi_data))>0){
 			beta <- getMethylumiBeta(methLumi_data, alfa)
 			
@@ -501,7 +529,7 @@ pipelineIlluminaMethylation.batch2 <- function(
         cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
         return(NULL)
       }
-			
+
       id1 <- which(tolower(rownames(qc[[1]])) %in% tolower(rownames(qc_i[[1]])))
 			id2 <- which(rownames(qc_i[[1]]) %in% rownames(qc[[1]]))
       
@@ -590,8 +618,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	############################################################################################								
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
-	
-	write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+	#write.table(beta, file=paste(PATH_RES, projectName, "_beta_intermediate.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	
 	if(NormProcedure=="SWAN" && MvalueConv){
 		data.preprocess.norm <- normalizeIlluminaMethylationSWAN2(
