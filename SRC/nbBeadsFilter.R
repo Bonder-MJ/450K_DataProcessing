@@ -35,18 +35,16 @@ nbBeadsFilter <- function(methyLumi, nbBeads.threshold = 3){
 	return(methyLumi)
 }
 
-nbBeadsFilterIdat <- function(methyLumi, NumberOfBeads, nbBeads.threshold = 3){
+nbBeadsFilterIdat <- function(methyLumi, nbBeads.threshold = 3){
   
-  keepInf <- which(rownames(NumberOfBeads) %in% rownames(methylated(methyLumi)))
-  
-  NumberOfBeads <- NumberOfBeads[keepInf,]
-  NumberOfBeads <- NumberOfBeads[order(rownames(NumberOfBeads)),]
+  #get nBeads for A and B signals (unmethylated and methylated signals)
+  nbBeadA <- methylated.N(methyLumi)
+  nbBeadB <- unmethylated.N(methyLumi)
   
   #identify nbBeads < 3
-  indexA <- which(NumberOfBeads < nbBeads.threshold)
-  indexB <- which(is.na(NumberOfBeads))
+  indexA <- which(nbBeadA < nbBeads.threshold)
+  indexB <- which(nbBeadB < nbBeads.threshold)
   indexAB <- union(indexA, indexB)
-  
   rm(indexA, indexB)
   
   #get detection pvalues

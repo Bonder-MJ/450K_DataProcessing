@@ -57,12 +57,8 @@ pipelineIlluminaMethylation.batch <- function(
       barcode <- gsub("_Red.idat","",x=barcode)
       barcodes <- unique(barcode)
       
-      cat("\n\tStart data loading...\n")
-      RG.set <- read.450k.exp(base=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), extended=TRUE)
-      NumberOfBeads <- beadcountMJ(RG.set)
-      rm(RG.set)
-      
-      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
+      cat("\n\tStart data loading...\n")      
+      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), n=T)
       methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
       
       cat("\tProject sample nb: ", length(barcodes), ".\n")
@@ -86,7 +82,6 @@ pipelineIlluminaMethylation.batch <- function(
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
         methLumi_dataTmpData,
-        NumberOfBeads,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
         nbBeads.threshold = nbBeads.threshold,
@@ -260,11 +255,10 @@ pipelineIlluminaMethylation.batch <- function(
       beta <- beta2
       rm(beta2)
     }
-    data.preprocess.norm <- list(beta, detect.pval)
+    data.preprocess.norm <- list(beta, detectionPval)
     names(data.preprocess.norm) <- c("beta", "detection.pvalue")
  
-	}
-	if(NormProcedure == "BMIQ"){
+	} else if(NormProcedure == "BMIQ"){
 		data.preprocess.norm <- normalizeIlluminaMethylationBMIQ(
 			beta = beta,
 			detect.pval = detectionPval,
@@ -357,14 +351,9 @@ pipelineIlluminaMethylation.batch2 <- function(
       barcode <- gsub("_Red.idat","",x=barcode)
       barcodes <- unique(barcode)
       
-      cat("\n\tStart data loading...\n")
-      
-      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""))
+      cat("\n\tStart data loading...\n")      
+      methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), n=T)
       methLumi_dataTmpData <- as(methLumi_dataTmpData, 'MethyLumiM')
-      
-      RG.set <- read.450k.exp(base=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), extended=TRUE)
-      NumberOfBeads <- beadcountMJ(RG.set)
-      rm(RG.set)
       
       cat("\tProject sample nb: ", length(barcodes), ".\n")
       cat("\tData dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
@@ -387,7 +376,6 @@ pipelineIlluminaMethylation.batch2 <- function(
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
         methLumi_dataTmpData,
-        NumberOfBeads,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
         nbBeads.threshold = nbBeads.threshold,

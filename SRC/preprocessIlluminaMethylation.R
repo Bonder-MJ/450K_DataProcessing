@@ -193,7 +193,6 @@ preprocessIlluminaMethylation <- function(
 
 preprocessIlluminaMethylationIdat <- function(
   methLumi_dataTmpData,
-  NumberOfBeads,
   sampleAnnotationInfomation,
   projectName,
   nbBeads.threshold=3,
@@ -251,7 +250,7 @@ preprocessIlluminaMethylationIdat <- function(
   if(!is.null(nbBeads.threshold)){
     i<-i+1
     cat(" Step ", i, ": start nb beads/probe filtering...\n")
-    methLumi_dataTmpData <- nbBeadsFilterIdat(methLumi_dataTmpData, NumberOfBeads, nbBeads.threshold)
+    methLumi_data <- nbBeadsFilterIdat(methLumi_dataTmpData, nbBeads.threshold)
     cat("\t...done.\n\n")
   }
   
