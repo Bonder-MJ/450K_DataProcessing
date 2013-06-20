@@ -27,7 +27,8 @@ preprocessIlluminaMethylation <- function(
 	projectName,
 	nbBeads.threshold=3,
 	detectionPval.threshold=0.01,
-	detectionPval.perc.threshold=80,
+	detectionPval.perc.threshold=95,
+	detectionPval.perc.threshold2=1,
 	sample2keep,
 	probeSNP_LIST,
 	XY.filtering,
@@ -54,33 +55,21 @@ preprocessIlluminaMethylation <- function(
 	if(QCplot){
 		plotQC(getMethylumiBeta(methLumi_data), figName=paste(projectName, "_beta.raw", sep=""), PATH = PATH)
 	}
-
+  
 # remove controls or unrelevant samples
 	if(!is.null(sample2keep)) {
-		i<-i+1
-		cat(" Step ", i, ": 'pertinent' sample selection...\n")
-		sample2keep <- read.table(file=sample2keep, sep="\t", header=FALSE, quote="")[[1]]
-		methLumi_data <- getSamples(methLumi_data, sample2keep)
-		
-		if(is.null(methLumi_data)){
-			cat("\t Project samples nb after sample selection: 0.\n")
-			cat("\t Skipping sub project.\n")
-			return(NULL)
-		}
-		
-		cat("\t Project samples nb after sample selection: ", length(sampleNames(methLumi_data)), ".\n")
-		cat("\t...done.\n\n")
-	}
-  
-# SNP filtering
-	if(!is.null(probeSNP_LIST)){
+	  i<-i+1
+	  cat(" Step ", i, ": 'pertinent' sample selection...\n")
+	  sample2keep <- read.table(file=sample2keep, sep="\t", header=FALSE, quote="")[[1]]
+	  methLumi_data <- getSamples(methLumi_data, sample2keep)
 	  
-	  i <- i+1
-	  cat(" Step ", i, ": start frequent SNP filtering...\n")
-	  indexProbe2remove <- which(is.element(featureNames(methLumi_data), probeSNP_LIST))
-	  if(length(indexProbe2remove)>0) methLumi_data <- methLumi_data[-indexProbe2remove,]
+	  if(is.null(methLumi_data)){
+	    cat("\t Project samples nb after sample selection: 0.\n")
+	    cat("\t Skipping sub project.\n")
+	    return(NULL)
+	  }
 	  
-	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
+	  cat("\t Project samples nb after sample selection: ", length(sampleNames(methLumi_data)), ".\n")
 	  cat("\t...done.\n\n")
 	}
 	
@@ -98,7 +87,18 @@ preprocessIlluminaMethylation <- function(
 	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
 	  cat("\t...done.\n\n")
 	}
-	
+  
+# SNP filtering
+	if(!is.null(probeSNP_LIST)){
+	  
+	  i <- i+1
+	  cat(" Step ", i, ": start frequent SNP filtering...\n")
+	  indexProbe2remove <- which(is.element(featureNames(methLumi_data), probeSNP_LIST))
+	  if(length(indexProbe2remove)>0) methLumi_data <- methLumi_data[-indexProbe2remove,]
+	  
+	  cat("\t Data dimensions: ", dim(methLumi_data)[1],"x", dim(methLumi_data)[2], ".\n")
+	  cat("\t...done.\n\n")
+	}
   
 # nbBeads filtering
 	if(!is.null(nbBeads.threshold)){
@@ -111,21 +111,42 @@ preprocessIlluminaMethylation <- function(
 # sample QC and filtering
   if((!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)) || average.U.M.Check){
     i<-i+1
-    cat(" Step ", i, ": start sample QC & filtering...\n")
-    cat("\t Project samples nb. before QC: ", length(sampleNames(methLumi_data)), ".\n")
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
-      methLumi_data <- detectionPval.filter(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
-      cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_data)), ".\n")
-    }
+    
     # remove bad U + M samples
+    cat(" Step ", i, ": start sample QC & filtering...\n")
+    cat("\t Project samples nb. before QC: ", length(sampleNames(methLumi_data)), ", probes nb. before QC: ", dim(unmethylated(methLumi_data))[1],".\n")
     if(average.U.M.Check) {
       methLumi_data <- AverageUandM.filter(methLumi_data, minimalAverageChanelValue, maxratioDifference, projectName, PATH=PATH)
       cat("\t Project samples nb. average chanel filtering: ", length(sampleNames(methLumi_data)), ".\n")
     }
-    cat("\t...done.\n\n")
+    
     if(length(sampleNames(methLumi_data))==0){
+      cat("\t Warning: during sample QC all samples where removed.\n")
       return(NULL)
     }
+    
+    # remove bad p-value samples
+    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+      methLumi_data <- detectionPval.filter(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
+      cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_data)), ".\n")
+    }
+    
+    if(length(sampleNames(methLumi_data))==0){
+      cat("\t Warning: during sample QC all samples where removed.\n")
+      return(NULL)
+    }
+    
+    # remove bad probes
+    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2)){
+      methLumi_data <- detectionPval.filter2(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
+      cat("\t Project probes nb. after after P-value filtering: ", dim(unmethylated(methLumi_data))[1], ".\n")
+    }
+    
+    if(length(sampleNames(methLumi_data))==0){
+      cat("\t Warning: during sample QC all probes where removed.\n")
+      return(NULL)
+    }
+    cat("\t...done.\n\n")
   }
 	
 #plot raw data QC
@@ -168,9 +189,6 @@ preprocessIlluminaMethylation <- function(
 }
 
 
-
-
-
 # This function performs a complete Illumina 450K array data preprocessing (but no normalization), directly from .idat files.
 #
 # Args:
@@ -197,8 +215,8 @@ preprocessIlluminaMethylationIdat <- function(
   projectName,
   nbBeads.threshold=3,
   detectionPval.threshold=0.01,
-  detectionPval.perc.threshold=80,
-  sample2keep,
+  detectionPval.perc.threshold=95,
+  detectionPval.perc.threshold2=1,
   probeSNP_LIST,
   XY.filtering,
   colorBias.corr=TRUE,
@@ -219,18 +237,6 @@ preprocessIlluminaMethylationIdat <- function(
     plotQC(getMethylumiBeta(methLumi_dataTmpData), figName=paste(projectName, "_beta.raw", sep=""), PATH = PATH)
   }
   
-  # SNP filtering
-  if(!is.null(probeSNP_LIST)){
-    
-    i <- i+1
-    cat(" Step ", i, ": start frequent SNP filtering...\n")
-    indexProbe2remove <- which(is.element(featureNames(methLumi_dataTmpData), probeSNP_LIST))
-    if(length(indexProbe2remove)>0) methLumi_dataTmpData <- methLumi_dataTmpData[-indexProbe2remove,]
-    
-    cat("\t Data dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
-    cat("\t...done.\n\n")
-  }
-  
   # XY chz filtering
   if(tolower(XY.filtering)=="autosomal"){
     i <- i+1
@@ -245,6 +251,17 @@ preprocessIlluminaMethylationIdat <- function(
     cat("\t Data dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
     cat("\t...done.\n\n")
   }
+  # SNP filtering
+  if(!is.null(probeSNP_LIST)){
+    
+    i <- i+1
+    cat(" Step ", i, ": start frequent SNP filtering...\n")
+    indexProbe2remove <- which(is.element(featureNames(methLumi_dataTmpData), probeSNP_LIST))
+    if(length(indexProbe2remove)>0) methLumi_dataTmpData <- methLumi_dataTmpData[-indexProbe2remove,]
+    
+    cat("\t Data dimensions: ", dim(methLumi_dataTmpData)[1],"x", dim(methLumi_dataTmpData)[2], ".\n")
+    cat("\t...done.\n\n")
+  }
   
   # nbBeads filtering
   if(!is.null(nbBeads.threshold)){
@@ -254,41 +271,44 @@ preprocessIlluminaMethylationIdat <- function(
     cat("\t...done.\n\n")
   }
   
-  # remove controls or unrelevant samples
-  if(!is.null(sample2keep)) {
-    i<-i+1
-    cat(" Step ", i, ": 'pertinent' sample selection...\n")
-    sample2keep <- read.table(file=sample2keep, sep="\t", header=FALSE, quote="")[[1]]
-    methLumi_dataTmpData <- getSamples(methLumi_dataTmpData, sample2keep)
-    
-    if(is.null(methLumi_dataTmpData)){
-      cat("\t Project samples nb after sample selection: 0.\n")
-      cat("\t Skipping sub project.\n")
-      return(NULL)
-    }
-    
-    cat("\t Project samples nb after sample selection: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
-    cat("\t...done.\n\n")
-  }
-  
   # sample QC and filtering
   if((!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)) || average.U.M.Check){
     i<-i+1
     cat(" Step ", i, ": start sample QC & filtering...\n")
-    cat("\t Project samples nb. before QC: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
-      methLumi_dataTmpData <- detectionPval.filter(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
-      cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
-    }
+    cat("\t Project samples nb. before QC: ", length(sampleNames(methLumi_data)), ", probes nb. before QC: ", dim(unmethylated(methLumi_data))[1],".\n")
+    
     # remove bad U + M samples
     if(average.U.M.Check) {
       methLumi_dataTmpData <- AverageUandM.filter(methLumi_dataTmpData, minimalAverageChanelValue, maxratioDifference, projectName, PATH=PATH)
       cat("\t Project samples nb. average chanel filtering: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
     }
-    cat("\t...done.\n\n")
+    
     if(length(sampleNames(methLumi_dataTmpData))==0){
+      cat("\t Warning: during sample QC all samples where removed.\n")
       return(NULL)
     }
+    
+    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+      methLumi_dataTmpData <- detectionPval.filter(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
+      cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
+    }
+    
+    if(length(sampleNames(methLumi_dataTmpData))==0){
+      cat("\t Warning: during sample QC all samples where removed.\n")
+      return(NULL)
+    }
+    
+    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2)){
+      methLumi_dataTmpData <- detectionPval.filter2(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
+      cat("\t Project probes nb. after after P-value filtering: ", dim(unmethylated(methLumi_data))[1], ".\n")
+    }
+    
+    if(length(sampleNames(methLumi_dataTmpData))==0){
+      cat("\t Warning: during sample QC all probes where removed.\n")
+      return(NULL)
+    }
+    cat("\t...done.\n\n")
+    
   }
   
   #plot raw data QC

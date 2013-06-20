@@ -86,7 +86,7 @@
 ##############################
 #
 ### PATHs to files and folders
-# set working directory
+#set working directory
 setwd("")
 #
 # set PATH to R pipeline's scripts for script sourcing
@@ -115,17 +115,21 @@ PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFi
 # The name that will be given to result files
 projectName = "ILLUMINA450K"
 #
-# Minimal bead number for considering that a probe worked. If =NULL, does not perform bead nb. based filtering.
-nbBeads.threshold = 3
+# Minimal bead number for considering that a probe worked. If = NULL, does not perform bead nb. based filtering.
+nbBeads.threshold = 4
 #
 # Threshold for detection p-values significance. A signal is considered as significant if its associated detection p-values < this threshold (0.01 by default).
 detectionPval.threshold = 0.01
 #
 # Percentage of significant probe methylation signals in a given sample (by default, >80% for "good quality" samples). This is used for samples QC and filtering. All samples that do not respect this condition will be removed from the analysis.
-detectionPval.perc.threshold = 90
+# If set to NULL this will not be performed
+detectionPval.perc.threshold = 95
+# Percentage of significant sample methylation signals in a given probe (by default, >1% for "good quality" probes). This is used for probe QC and filtering. All probes that do not respect this condition will be removed from the analysis.
+# If set to NULL this will not be performed
+detectionPval.perc.threshold2 = 1
 #
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
-sampleSelection = FALSE
+sampleSelection = TRUE
 #
 # if "allosomal" only X and Y probes are returned, if "autosomal" only the non X and Y probes are returned. Any other value will return every thing.
 XY.filtering = "autosomal"
@@ -136,7 +140,7 @@ colorBias.corr = TRUE
 # if 'TRUE' a additional sample filtering based on average M and U values is preformed. Cut-offs are designed based on a set of >2000 450k samples. 
 average.U.M.Check = TRUE
 minimalAverageChanelValue = 3108.038
-maxratioDifference = 0.2506493
+maxratioDifference = 1.292633
 #
 # If "separatecolors", performs a separate color bg adjustement (recommended), if "unseparatecolors" performs a non separate color bg adjustement , if "no" don't perform any bg adjustement.
 bg.adjust = "separatecolors"
@@ -161,8 +165,10 @@ QCplot=FALSE
 #NormProcedure = "M-ValCor2"
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
+#Normalization procedure by Pidsley et al.
+NormProcedure = "NASEN"
 #No normalization
-NormProcedure = "None"
+#NormProcedure = "None"
 
 #When using M-val do a Median replacement for missing values.
 medianReplacement = FALSE;
@@ -181,7 +187,7 @@ includeQuantileNormOverChanel = FALSE
 MvalueConv = TRUE
 
 # Write Rdata / txt / both
-outputType = "txt"
+outputType = "Rdata"
 
 #
 ##############################################
@@ -231,6 +237,7 @@ source(paste(PATH_SRC,"Additions/swan2.R", sep=""))
 source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
 source(paste(PATH_SRC,"Additions/beadcountMJ.R", sep=""))
 source(paste(PATH_SRC,"Additions/dasen.R", sep=""))
+source(paste(PATH_SRC,"Additions/nasen.R", sep=""))
 source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 #
@@ -253,13 +260,14 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 data.preprocess.norm <- NULL
 print(paste(NormProcedure ,"normalization procedure"))
-if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2"){
+if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2" && NormProcedure != "NASEN"){
   data.preprocess.norm <- pipelineIlluminaMethylation.batch(
     PATH_PROJECT_DATA,
     projectName = projectName,
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,
+    detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
     sampleSelection = sampleSelection,
     probeSNP_LIST = probeSNP_LIST,
     XY.filtering = XY.filtering,
@@ -283,6 +291,7 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,
+    detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
     sampleSelection = sampleSelection,
     probeSNP_LIST = probeSNP_LIST,
     XY.filtering = XY.filtering,
@@ -349,3 +358,4 @@ if(MvalueConv){
 if(QCplot){
   plotQC(data.preprocess.norm$beta, figName=paste(projectName, "_beta.preproc.norm", sep=""), PATH = PATH_RES)
 }
+

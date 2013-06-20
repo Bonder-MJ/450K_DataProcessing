@@ -10,6 +10,7 @@ pipelineIlluminaMethylation.batch <- function(
 	nbBeads.threshold,
 	detectionPval.threshold,
 	detectionPval.perc.threshold,
+	detectionPval.perc.threshold2,
 	sampleSelection,
 	probeSNP_LIST,
 	XY.filtering,
@@ -56,6 +57,27 @@ pipelineIlluminaMethylation.batch <- function(
       barcode <- gsub("_Grn.idat","",x=barcode)
       barcode <- gsub("_Red.idat","",x=barcode)
       barcodes <- unique(barcode)
+      sample2keep <- NULL
+      
+      if(sampleSelection){
+        sampleList <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern = "sampleList")
+        path2sampleList <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleList, sep="")
+        
+        if(length(sampleList) == 1){
+          sample2keep <- read.table(file=path2sampleList, sep="\t", header=FALSE, quote="")[[1]]
+          
+        } else {
+          warning <- "\tWARNING ! List for sample selection: too many / less files matching with pattern 'SampleList' ! \n"
+          cat(warning)
+          return(warning)
+        }
+      }
+      if(!(is.null(sample2keep))){
+        barcodes <- intersect(barcodes,sample2keep);
+        if(length(barcodes)==0){
+          return(NULL)
+        }
+      }
       
       cat("\n\tStart data loading...\n")      
       methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), n=T)
@@ -87,7 +109,7 @@ pipelineIlluminaMethylation.batch <- function(
         nbBeads.threshold = nbBeads.threshold,
         detectionPval.threshold = detectionPval.threshold,
         detectionPval.perc.threshold = detectionPval.perc.threshold,
-        sample2keep = path2sampleList,
+        detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
         probeSNP_LIST,
         XY.filtering = XY.filtering,
         colorBias.corr = colorBias.corr,
@@ -158,6 +180,7 @@ pipelineIlluminaMethylation.batch <- function(
   			nbBeads.threshold = nbBeads.threshold,
   			detectionPval.threshold = detectionPval.threshold,
   			detectionPval.perc.threshold = detectionPval.perc.threshold,
+  			detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
   			sample2keep = path2sampleList,
   			probeSNP_LIST,
   			XY.filtering = XY.filtering,
@@ -301,6 +324,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	nbBeads.threshold,
 	detectionPval.threshold,
 	detectionPval.perc.threshold,
+	detectionPval.perc.threshold2,
 	sampleSelection,
 	probeSNP_LIST,
 	XY.filtering,
@@ -329,13 +353,14 @@ pipelineIlluminaMethylation.batch2 <- function(
 	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
+  
+	readFromIdat <- FALSE
+	readFromOriginalInput <- FALSE
 	
 	#for all subprojects
 	for(i in 1:length(subProjects)){
 	  
     methLumi_data <- NULL
-    readFromIdat <- FALSE
-    readFromOriginalInput <- FALSE
 		projectName_batch <- subProjects[i]
 		sampleTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableSample")
 		controlTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableControl")
@@ -344,12 +369,33 @@ pipelineIlluminaMethylation.batch2 <- function(
 
     #####
     if(length(sampleTable) < 1 && length(controlTable) < 1 && length(list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat"))>0){
-      readFromIdat=TRUE
+      
       barcode<- list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat")
       
       barcode <- gsub("_Grn.idat","",x=barcode)
       barcode <- gsub("_Red.idat","",x=barcode)
       barcodes <- unique(barcode)
+      sample2keep <- NULL
+      
+      if(sampleSelection){
+        sampleList <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern = "sampleList")
+        path2sampleList <- paste(PATH_PROJECT_DATA, projectName_batch, "/", sampleList, sep="")
+        
+        if(length(sampleList) == 1){
+          sample2keep <- read.table(file=path2sampleList, sep="\t", header=FALSE, quote="")[[1]]
+          
+        } else {
+          warning <- "\tWARNING ! List for sample selection: too many / less files matching with pattern 'SampleList' ! \n"
+          cat(warning)
+          return(warning)
+        }
+      }
+      if(!(is.null(sample2keep))){
+        barcodes <- intersect(barcodes,sample2keep);
+        if(length(barcodes)==0){
+          return(NULL)
+        }
+      }
       
       cat("\n\tStart data loading...\n")      
       methLumi_dataTmpData <- methylumIDAT(barcodes, idatPath=paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), n=T)
@@ -381,7 +427,7 @@ pipelineIlluminaMethylation.batch2 <- function(
         nbBeads.threshold = nbBeads.threshold,
         detectionPval.threshold = detectionPval.threshold,
         detectionPval.perc.threshold = detectionPval.perc.threshold,
-        sample2keep = path2sampleList,
+        detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
         probeSNP_LIST,
         XY.filtering = XY.filtering,
         colorBias.corr = colorBias.corr,
@@ -393,8 +439,14 @@ pipelineIlluminaMethylation.batch2 <- function(
         QCplot = QCplot
       )
       rm(methLumi_dataTmpData)
+      
+      if(is.null(methLumi_data)){
+        next;
+      }
+      
+      readFromIdat=TRUE
+      
     } else {
-      readFromOriginalInput=TRUE
   		if(length(sampleTable) > 1){
   			warning <- "\tWARNING ! Sample table: too many files matching with pattern 'TableSample' ! \n"
   			cat(warning)
@@ -453,6 +505,7 @@ pipelineIlluminaMethylation.batch2 <- function(
   			nbBeads.threshold = nbBeads.threshold,
   			detectionPval.threshold = detectionPval.threshold,
   			detectionPval.perc.threshold = detectionPval.perc.threshold,
+  			detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
   			sample2keep = path2sampleList,
   			probeSNP_LIST,
   			XY.filtering = XY.filtering,
@@ -464,11 +517,14 @@ pipelineIlluminaMethylation.batch2 <- function(
   			PATH = PATH_RES,
   			QCplot = QCplot
   		)
+      
+  		if(is.null(methLumi_data)){
+  		  next;
+  		}
+  		readFromOriginalInput=TRUE
     }
 		
-		if(is.null(methLumi_data)){
-			next;
-		}
+		
     
 		################################################
 		# Sub-project data & information concatenation #
@@ -646,6 +702,17 @@ pipelineIlluminaMethylation.batch2 <- function(
 	    alfa,
 	    betweenSampleCorrection = betweenSampleCorrection,
 	    medianReplacement
+	  )
+	} else if (NormProcedure=="NASEN"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationNASEN(
+	    detect.pval = detectionPval,
+	    unMeth,
+	    meth,
+	    qc,
+	    annotation,
+	    alfa,
+	    MvalueConv,
+	    betweenSampleCorrection = betweenSampleCorrection
 	  )
 	} else {
 		data.preprocess.norm <- normalizeIlluminaMethylationDASEN(
