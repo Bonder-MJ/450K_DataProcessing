@@ -68,15 +68,19 @@ pipelineIlluminaMethylation.batch <- function(
           
         } else {
           warning <- "\tWARNING ! List for sample selection: too many / less files matching with pattern 'SampleList' ! \n"
+          #print(sampleList)
           cat(warning)
           return(warning)
         }
       }
       if(!(is.null(sample2keep))){
         barcodes <- intersect(barcodes,sample2keep);
-        if(length(barcodes)==0){
-          return(NULL)
-        }
+      }
+      
+      if(length(barcodes)<2){
+        cat("\n\tSkipped folder: ",projectName_batch,"\n")
+        cat("\t to little samples")
+        next;
       }
       
       cat("\n\tStart data loading...\n")      
@@ -386,15 +390,19 @@ pipelineIlluminaMethylation.batch2 <- function(
           
         } else {
           warning <- "\tWARNING ! List for sample selection: too many / less files matching with pattern 'SampleList' ! \n"
+          #print(sampleList)
           cat(warning)
           return(warning)
         }
       }
       if(!(is.null(sample2keep))){
         barcodes <- intersect(barcodes,sample2keep);
-        if(length(barcodes)==0){
-          return(NULL)
-        }
+      }
+      
+      if(length(barcodes)<2){
+        cat("\n\tSkipped folder: ",projectName_batch,"\n")
+        cat("\t to little samples")
+        next;
       }
       
       cat("\n\tStart data loading...\n")      
