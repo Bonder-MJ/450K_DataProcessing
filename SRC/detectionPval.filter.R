@@ -16,6 +16,8 @@ detectionPval.filter <- function(methLumi_data, detectionPval.threshold=0.01, de
 	detectPval <- assayDataElement(methLumi_data, "detection")
 	#get sample names
 	samples <- colnames(detectPval)
+	nbSignifPval <- as.vector(colSums(detectPval <= detectionPval.threshold))
+	percentSignifPval <- as.vector((colSums(detectPval <= detectionPval.threshold)/nrow(methLumi_data))*100)
   
 	#for each sample compute the number and % or relevant signal (detection p-value < detectionPval.threshold)
 	nrMin <- (nrow(methLumi_data)/100)*detectionPval.perc.threshold
@@ -23,7 +25,9 @@ detectionPval.filter <- function(methLumi_data, detectionPval.threshold=0.01, de
 	index2remove <- which(colSums(detectPval <= detectionPval.threshold) < nrMin)
   
   rm(detectPval)
-	
+  
+	if(!is.null(projectName)) write.table(list(samples=samples[index2remove], nbSignifPval=nbSignifPval[index2remove], percentSignifPval=percentSignifPval[index2remove]), file=paste(PATH, projectName, "_non-signifPvalStats-Sample_threshold", detectionPval.threshold, ".txt", sep=""), sep="\t", row.names=FALSE, col.names=TRUE)
+  
 	#remove "bad" samples from methylumi object
 	if(length(index2remove)>0) methLumi_data <- methLumi_data[,-index2remove]
 	
@@ -59,6 +63,8 @@ detectionPval.filter2 <- function(methLumi_data, detectionPval.threshold=0.01, d
   detectPval <- assayDataElement(methLumi_data, "detection")
   #get sample names
   probeNames <- rownames(detectPval)
+  nbSignifPval <- as.vector(rowSums(detectPval <= detectionPval.threshold))
+  percentSignifPval <- as.vector((rowSums(detectPval <= detectionPval.threshold)/ncol(methLumi_data))*100)
     
   #for each probe compute the number and % or relevant signal (detection p-value < detectionPval.threshold)
   
@@ -67,6 +73,8 @@ detectionPval.filter2 <- function(methLumi_data, detectionPval.threshold=0.01, d
   index2remove <- which(rowSums(detectPval > detectionPval.threshold) > nrMax)
   
   rm(detectPval)
+  
+  if(!is.null(projectName)) write.table(list(probeNames=probeNames[index2remove], nbSignifPval=nbSignifPval[index2remove], percentSignifPval=percentSignifPval[index2remove]), file=paste(PATH, projectName, "_non-signifPvalStats-Probe_threshold", detectionPval.threshold, ".txt", sep=""), sep="\t", row.names=FALSE, col.names=TRUE)
   
   #remove "bad" samples from methylumi object
   if(length(index2remove)>0) methLumi_data <- methLumi_data[-index2remove,]

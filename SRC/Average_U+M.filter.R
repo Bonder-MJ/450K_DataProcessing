@@ -17,6 +17,13 @@ AverageUandM.filter <- function(methLumi_data, minimalAverageChanelValue, maxrat
   
 	#get sample names
 	samples <- names(unmethAveragePerSample)
+	unmethAveragePerSample <- colMeans(unmethylated(methLumi_data))
+	methAveragePerSample <- colMeans(methylated(methLumi_data))
+	rationMethUnmeth = methAveragePerSample / unmethAveragePerSample
+  
+	averageUSignal <- as.vector(unmethAveragePerSample)
+	averageMSignal <- as.vector(methAveragePerSample)
+	ratioUM <- as.vector(rationMethUnmeth)
 
   removalId1 <- which(unmethAveragePerSample < minimalAverageChanelValue)
 	removalId2 <- which(methAveragePerSample < minimalAverageChanelValue)
@@ -25,6 +32,8 @@ AverageUandM.filter <- function(methLumi_data, minimalAverageChanelValue, maxrat
 	#get "bad" samples indices
 	index2remove <- union(union(removalId1, removalId2), removalId3)
 	rm(unmethAveragePerSample,methAveragePerSample,rationMethUnmeth,removalId1,removalId2,removalId3)
+  
+	if(!is.null(projectName)) write.table(list(samples=samples[index2remove], averageUSignal=averageUSignal[index2remove], averageMSignal=averageMSignal[index2remove], ratioUM=ratioUM[index2remove]), file=paste(PATH, projectName, "_BadSample_U-M_Signal_threshold", detectionPval.threshold, ".txt", sep=""), sep="\t", row.names=FALSE, col.names=TRUE)
 	
 	#remove "bad" samples from methylumi object
 	if(length(index2remove)>0) methLumi_data <- methLumi_data[,-index2remove]
