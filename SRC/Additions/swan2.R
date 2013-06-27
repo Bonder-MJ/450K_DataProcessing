@@ -129,7 +129,26 @@ swan2_M <- function (unMeth, meth, qc, alfa) {
   assayDataElement(normSet, "Unmeth") <- normUnmethData
   normSet@preprocessMethod <- c(sprintf("SWAN (based on a MethylSet preprocesses as '%s'", mSet@preprocessMethod[1]), as.character(packageVersion("minfi")), as.character(packageVersion("IlluminaHumanMethylation450kmanifest")))
   
-  return(log2(getMeth(mSet)+alfa/getUnmeth(mSet)+alfa))
+  uns <- getUnmeth(mSet)
+  mns <- getMeth(mSet)
+  
+  indexNegU <- which(!is.numeric(uns), arr.ind=TRUE)
+  indexNegM <- which(!is.numeric(mns), arr.ind=TRUE)
+  if(length(indexNegU)>0 || length(indexNegM)>0){
+    cat("\tWarning: NA values introduced. Value is replaced by 0.\n")
+    
+    uns[indexNegU] <- 0
+    mns[indexNegM] <- 0
+  }
+  
+  #check and "correct" for negative values
+  indexNegU <- which(uns < 0, arr.ind=TRUE)
+  indexNegM <- which(mns < 0, arr.ind=TRUE)
+  uns[indexNegU] <- 0
+  mns[indexNegM] <- 0
+
+
+  return(log2(mns+alfa/uns+alfa))
 }
 
 

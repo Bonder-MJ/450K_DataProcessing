@@ -109,13 +109,29 @@ MvalType2Cor <- function(data1, type1, idNameY = 1, PATH_RES, QCplot=FALSE, medi
 MvalType2Cor2 <- function(dataU, dataM, type1, idNameY = 1, alfa=10, PATH_RES, QCplot=FALSE, medianReplacement=FALSE){
 	options(warn=-1)
   
-	data1 <- log2(dataM+alfa/dataU+alfa)
-	
 	if(medianReplacement){
-		medianD1 <- median(which(is.numeric(data1)))
-		data1[which(!is.numeric(data1))] <- medianD1
+	  medianD1 <- median(which(is.numeric(data1)))
+	  data1[which(!is.numeric(data1))] <- medianD1
+	}
+  
+	indexNegU <- which(!is.numeric(dataU), arr.ind=TRUE)
+	indexNegM <- which(!is.numeric(dataM), arr.ind=TRUE)
+	if(length(indexNegU)>0 || length(indexNegM)>0){
+	  cat("\tWarning: NA values introduced. Value is replaced by 0.\n")
+	  
+	  dataU[indexNegU] <- 0
+	  dataM[indexNegM] <- 0
 	}
 	
+	#check and "correct" for negative values
+	indexNegU <- which(dataU < 0, arr.ind=TRUE)
+	indexNegM <- which(dataM < 0, arr.ind=TRUE)
+	dataU[indexNegU] <- 0
+	dataM[indexNegM] <- 0
+  
+  
+	data1 <- log2(dataM+alfa/dataU+alfa)
+		
 	rm(dataU, dataM)
 	
 	data1 <- cbind(rownames(data1), as.data.frame(data1))

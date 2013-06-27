@@ -98,6 +98,46 @@ normalizeIlluminaMethylationSWAN <- function(
 	return(data.norm)
 }
 
+normalizeIlluminaMethylationSWAN2 <- function(
+  detect.pval,
+  unMeth,
+  meth,
+  qc,
+  alfa,
+  betweenSampleCorrection = TRUE
+)
+{  
+  options(warn=-1)
+  normalizedBeta <- swan2_M(unMeth, meth, qc, alfa)
+  options(warn=0)
+  if(any(is.na(normalizedBeta))){
+    for(i in 1: ncol(normalizedBeta)){
+      if(any(is.na(normalizedBeta[,i]))){
+        ids <- which(!is.numeric(normalizedBeta[,i]))
+        med <- median(normalizedBeta[-ids,i])
+        normalizedBeta[ids,i] <- med
+      }
+    }
+  }
+  
+  ##Do QN over samples after SWAN?
+  if(betweenSampleCorrection==TRUE){
+    normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
+    rownames(normalizedBeta2) <- rownames(normalizedBeta)
+    colnames(normalizedBeta2) <- colnames(normalizedBeta)
+    normalizedBeta <- normalizedBeta2
+    rm(normalizedBeta2)
+  }
+  #start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)
+  data.norm <- list(normalizedBeta, detect.pval)
+  
+  names(data.norm) <- c("beta", "detection.pvalue")
+  
+  cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
+  
+  return(data.norm)
+}
+
 normalizeIlluminaMethylationBMIQ <- function(
 	beta,
 	detect.pval,
@@ -348,42 +388,3 @@ normalizeIlluminaMethylationMValCor2 <- function(
   return(data.norm)
 }
 
-normalizeIlluminaMethylationSWAN2 <- function(
-  detect.pval,
-  unMeth,
-  meth,
-  qc,
-  alfa,
-  betweenSampleCorrection = TRUE
-)
-{	
-  options(warn=-1)
-  normalizedBeta <- swan2_M(unMeth, meth, qc, alfa)
-  options(warn=0)
-  if(any(is.na(normalizedBeta))){
-    for(i in 1: ncol(normalizedBeta)){
-      if(any(is.na(normalizedBeta[,i]))){
-        ids <- which(!is.numeric(normalizedBeta[,i]))
-        med <- median(normalizedBeta[-ids,i])
-        normalizedBeta[ids,i] <- med
-      }
-    }
-  }
-  
-  ##Do QN over samples after SWAN?
-  if(betweenSampleCorrection==TRUE){
-    normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
-    rownames(normalizedBeta2) <- rownames(normalizedBeta)
-    colnames(normalizedBeta2) <- colnames(normalizedBeta)
-    normalizedBeta <- normalizedBeta2
-    rm(normalizedBeta2)
-  }
-  #start subset quantile normalization, this function returns a list of 2 matrices (beta values & detection p-values)
-  data.norm <- list(normalizedBeta, detect.pval)
-  
-  names(data.norm) <- c("beta", "detection.pvalue")
-  
-  cat("\nDimension of normalized beta values matrix: ", dim(data.norm$beta)[1], "x", dim(data.norm$beta)[2],"\n")
-  
-  return(data.norm)
-}

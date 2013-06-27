@@ -16,6 +16,21 @@ dasen <- function(mns, uns, onetwo, alfa=100, MvalueConv=TRUE, ...){
    mnsc[onetwo=='II',] <- normalize.quantiles(mnsc[onetwo=='II',])
    unsc[onetwo=='II',] <- normalize.quantiles(unsc[onetwo=='II',])
    
+   indexNegU <- which(!is.numeric(unsc), arr.ind=TRUE)
+   indexNegM <- which(!is.numeric(mnsc), arr.ind=TRUE)
+   if(length(indexNegU)>0 || length(indexNegM)>0){
+     cat("\tWarning: NA values introduced. Value is replaced by 0.\n")
+     
+     unsc[indexNegU] <- 0
+     mnsc[indexNegM] <- 0
+   }
+   
+   #check and "correct" for negative values
+   indexNegU <- which(unsc < 0, arr.ind=TRUE)
+   indexNegM <- which(mnsc < 0, arr.ind=TRUE)
+   unsc[indexNegU] <- 0
+   mnsc[indexNegM] <- 0
+   
    if(MvalueConv){
      return(log2((mnsc+alfa)/(unsc + alfa)))
    } else{
