@@ -539,7 +539,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 		################################################
 
     if(readFromOriginalInput==TRUE && readFromIdat==TRUE){
-      cat("Warning: In SWAN & DASEN & M-ValCor2 preprocessing no mixing of input types is allowed.\n")
+      cat("Warning: In SWAN & NASEN & DASEN & M-ValCor2 preprocessing no mixing of input types is allowed.\n")
       return(NULL)
     }
     
@@ -681,7 +681,25 @@ pipelineIlluminaMethylation.batch2 <- function(
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
 	
-	if(NormProcedure=="SWAN" && MvalueConv){
+	if(NormProcedure=="None2"){
+    
+	  write.table(unMeth, file=paste(PATH_RES, projectName, "_U_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+	  write.table(meth, file=paste(PATH_RES, projectName, "_M_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+    
+	  beta <- getBetaMj(u=unMeth, m=meth, alfa=alfa)
+    rm(unMeth, meth)
+    
+	  if(betweenSampleCorrection){
+	    beta2 <- normalize.quantiles(as.matrix(beta))
+	    rownames(beta2) <- rownames(beta)
+	    colnames(beta2) <- colnames(beta)
+	    beta <- beta2
+	    rm(beta2)
+	  }
+	  data.preprocess.norm <- list(beta, detectionPval)
+	  names(data.preprocess.norm) <- c("beta", "detection.pvalue")
+    
+	} else if(NormProcedure=="SWAN" && MvalueConv){
 		data.preprocess.norm <- normalizeIlluminaMethylationSWAN2(
 			detect.pval = detectionPval,
 			unMeth,

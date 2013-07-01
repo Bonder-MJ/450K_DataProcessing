@@ -95,11 +95,11 @@ PATH_SRC <- "./SRC/"
 # set PATH to results folder
 PATH_RES <- "./RES/"
 #
-# set PATH to a folder of "projects" where each project corresponds to a folder of 450K plate extracted data : control probes methylation informations, raw sample methylation informations (data extracted with GenomeStudio) and eventually a sample IDs list to select. Only subfolders for plates can exist, otherwise the program will try to open any existing file as folder and crash.
-# requirement for data file naming :
+# set PATH to a folder of "projects" where each project corresponds to a folder of 450K plate extracted data. Only subfolders for plates can exist, otherwise the program will try to open any existing file as folder and crash.
+# For original Tost input these requrements for data extraction, inc naming necessary:
 #	- control probes file: file name must starts with the pattern "TableControl"
 #	- raw sample methylation file: file name must starts with the pattern "TableSample"
-#	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList"
+#	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList" ** Also needed for idat filtering
 
 PATH_PROJECT_DATA <- "./DATA/"
 
@@ -137,10 +137,12 @@ XY.filtering = "autosomal"
 # if 'TRUE' performs a color bias correction of methylated and unmethylated signals.
 colorBias.corr = TRUE
 #
-# if 'TRUE' a additional sample filtering based on average M and U values is preformed. Cut-offs are designed based on a set of >2000 450k samples. 
+# if 'TRUE' a additional sample filtering based on average M and U values is preformed. 
 average.U.M.Check = TRUE
-minimalAverageChanelValue = 3108.038
-maxratioDifference = 1.292633
+
+#Cut-offs are designed based on a set of >65000 450k samples. Minimum was set to 25% quantile - 1.5 * IQR, ratio was set to 75% quantile + 3* IQR. All ratios where transformed so they were higher than 1, the factor in the IQR was also chosen to be higher due to this.
+minimalAverageChanelValue = 1966.538
+maxratioDifference = 1.691505
 #
 # If "separatecolors", performs a separate color bg adjustement (recommended), if "unseparatecolors" performs a non separate color bg adjustement , if "no" don't perform any bg adjustement.
 bg.adjust = "separatecolors"
@@ -151,7 +153,7 @@ probeAnnotationsCategory = "relationToCpG"
 # If QCplot==TRUE, performs and plots hierarchical clustering and plots methylation density curves.
 QCplot=FALSE
 #
-# Select the normalization procedure. Switch between SQN / SWAN / M-Value / M-value2 / DASEN correction and BMIQ. If not give / write error this will default to SQN
+# Select the normalization procedure. Switch between SQN / SWAN / M-Value / M-value2 / DASEN correction and BMIQ. If not given this will default to SQN
 
 #Normalization procedure by Touleimat & Tost.
 #NormProcedure = "SQN"
@@ -166,9 +168,11 @@ QCplot=FALSE
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
 #Normalization procedure by Pidsley et al.
-NormProcedure = "NASEN"
-#No normalization
+#NormProcedure = "NASEN"
+#No normalization, returns only beta / M
 #NormProcedure = "None"
+#No normalization, returns beta / M including data on the individual chanels.
+NormProcedure = "None2"
 
 #When using M-val do a Median replacement for missing values.
 medianReplacement = FALSE;
@@ -260,7 +264,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 #
 data.preprocess.norm <- NULL
 print(paste(NormProcedure ,"normalization procedure"))
-if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2" && NormProcedure != "NASEN"){
+if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2" && NormProcedure != "NASEN" && NormProcedure != "None2"){
   data.preprocess.norm <- pipelineIlluminaMethylation.batch(
     PATH_PROJECT_DATA,
     projectName = projectName,
@@ -313,7 +317,7 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
 
 if(is.null(data.preprocess.norm)){
   print("No samples selected")
-  return(0)
+  stop()
 }
 
 beta <- data.preprocess.norm$beta
@@ -358,4 +362,3 @@ if(MvalueConv){
 if(QCplot){
   plotQC(data.preprocess.norm$beta, figName=paste(projectName, "_beta.preproc.norm", sep=""), PATH = PATH_RES)
 }
-
