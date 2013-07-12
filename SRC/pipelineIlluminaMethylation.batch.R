@@ -677,7 +677,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	
 	
 	
-	############################################################################################								
+	############################################################################################
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
 	
@@ -687,6 +687,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	  write.table(meth, file=paste(PATH_RES, projectName, "_M_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
     
 	  beta <- getBetaMj(u=unMeth, m=meth, alfa=alfa)
+    
     rm(unMeth, meth)
     
 	  if(betweenSampleCorrection){

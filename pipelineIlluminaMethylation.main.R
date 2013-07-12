@@ -324,7 +324,7 @@ beta <- data.preprocess.norm$beta
 detection.pvalue <- data.preprocess.norm$detection.pvalue
 
 if(MvalueConv){
-  if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN" && NormProcedure != "DASEN"){
+  if(NormProcedure != "M-ValCor2" && NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "NASEN"){
     for(i in 1:ncol(beta)){
       beta1 <- beta[,i]
       m1 <- log2(beta1/(1 - beta1))  

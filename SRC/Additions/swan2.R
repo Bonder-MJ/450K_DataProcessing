@@ -148,7 +148,7 @@ swan2_M <- function (unMeth, meth, qc, alfa) {
   mns[indexNegM] <- 0
 
 
-  return(log2(mns+alfa/uns+alfa))
+  return(log2((mns+alfa)/(uns+alfa)))
 }
 
 
