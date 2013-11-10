@@ -115,6 +115,8 @@ PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFi
 # The name that will be given to result files
 projectName = "ILLUMINA450K"
 #
+#Perform bead and P-value filtering after final merging.
+qcAfterMerging = TRUE
 # Minimal bead number for considering that a probe worked. If = NULL, does not perform bead nb. based filtering.
 nbBeads.threshold = 4
 #
@@ -129,7 +131,7 @@ detectionPval.perc.threshold = 95
 detectionPval.perc.threshold2 = 1
 #
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
-sampleSelection = TRUE
+sampleSelection = F
 #
 # if "allosomal" only X and Y probes are returned, if "autosomal" only the non X and Y probes are returned. Any other value will return every thing.
 XY.filtering = "autosomal"
@@ -239,7 +241,6 @@ source(paste(PATH_SRC,"hclustPlot.R", sep=""))
 source(paste(PATH_SRC,"Additions/BMIQ_1.3_Pipeline.R", sep=""))
 source(paste(PATH_SRC,"Additions/swan2.R", sep=""))
 source(paste(PATH_SRC,"Additions/Type2_M-value_Correction.R", sep=""))
-source(paste(PATH_SRC,"Additions/beadcountMJ.R", sep=""))
 source(paste(PATH_SRC,"Additions/dasen.R", sep=""))
 source(paste(PATH_SRC,"Additions/nasen.R", sep=""))
 source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
@@ -268,6 +269,7 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
   data.preprocess.norm <- pipelineIlluminaMethylation.batch(
     PATH_PROJECT_DATA,
     projectName = projectName,
+	qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,
@@ -292,6 +294,7 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
   data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
     PATH_PROJECT_DATA,
     projectName = projectName,
+	qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,

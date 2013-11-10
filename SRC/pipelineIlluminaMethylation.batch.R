@@ -7,6 +7,7 @@
 pipelineIlluminaMethylation.batch <- function(
 	PATH_PROJECT_DATA,
 	projectName,
+	qcAfterMerging = FALSE,
 	nbBeads.threshold,
 	detectionPval.threshold,
 	detectionPval.perc.threshold,
@@ -31,10 +32,10 @@ pipelineIlluminaMethylation.batch <- function(
 	####################################
 	# Get project pathes and load data #
 	####################################
-
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
 	beta <- NULL
+	detectionPval <- NULL
 	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
@@ -107,6 +108,7 @@ pipelineIlluminaMethylation.batch <- function(
       #############################
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
+        qcAfterMerging =qcAfterMerging,
         methLumi_dataTmpData,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
@@ -178,6 +180,7 @@ pipelineIlluminaMethylation.batch <- function(
   		#############################
   
   		methLumi_data <- preprocessIlluminaMethylation(
+  		  qcAfterMerging =qcAfterMerging,
   			path2data = path2data,
   			path2controlData = path2controlData,
   			projectName = projectName_batch,
@@ -252,6 +255,19 @@ pipelineIlluminaMethylation.batch <- function(
 	if(is.null(beta)){
 		return(NULL)
 	}
+  
+  if(qcAfterMerging){
+    t <- qcAfterMerg(
+      beta, 
+      detectionPval, 
+      detectionPval.threshold = detectionPval.threshold,
+      detectionPval.perc.threshold = detectionPval.perc.threshold,
+      detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
+      PATH = PATH
+      )
+    beta <- t[[1]]
+    detectionPval <- t[[2]]
+  }
 	
 	
 	############################################################################################
@@ -325,6 +341,7 @@ pipelineIlluminaMethylation.batch <- function(
 pipelineIlluminaMethylation.batch2 <- function(
 	PATH_PROJECT_DATA,
 	projectName,
+	qcAfterMerging = FALSE,
 	nbBeads.threshold,
 	detectionPval.threshold,
 	detectionPval.perc.threshold,
@@ -350,10 +367,11 @@ pipelineIlluminaMethylation.batch2 <- function(
 	####################################
 	# Get project pathes and load data #
 	####################################
-
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
-	beta <- NULL
+	unMeth <- NULL
+	meth <- NULL
+	detectionPval <- NULL
 	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
@@ -429,6 +447,7 @@ pipelineIlluminaMethylation.batch2 <- function(
       #############################
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
+        qcAfterMerging =qcAfterMerging,
         methLumi_dataTmpData,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
@@ -507,6 +526,7 @@ pipelineIlluminaMethylation.batch2 <- function(
   		#############################
   
   		methLumi_data <- preprocessIlluminaMethylation(
+  		  qcAfterMerging =qcAfterMerging,
   			path2data = path2data,
   			path2controlData = path2controlData,
   			projectName = projectName_batch,
@@ -556,16 +576,14 @@ pipelineIlluminaMethylation.batch2 <- function(
       rm(methLumi_data_un, methLumi_data_me)
     }
     
-		if(is.null(beta) && length(sampleNames(methLumi_data))>0){
-			beta <- getMethylumiBeta(methLumi_data, alfa)
-			
+		if(is.null(unMeth) && length(sampleNames(methLumi_data))>0){			
 			unMeth <- unmethylated(methLumi_data)
 			meth <- methylated(methLumi_data)
       qc <- intensitiesByChannel(QCdata(methLumi_data)) 
 			rownames(qc[[1]]) <- toupper(rownames(qc[[1]]))
 			rownames(qc[[2]]) <- toupper(rownames(qc[[2]]))
 			
-			cat("\t beta plate", i, " ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
+			cat("\t Chanels plate", i, " ok (", dim(unMeth)[1], "x", dim(unMeth)[2], ").\n")
 			detectionPval <- assayDataElement(methLumi_data, "detection")
 			cat("\t detection p-values plate", i, " ok (", dim(detectionPval)[1], "x", dim(detectionPval)[2], ").\n")
 			#select "useful" probe annotations
@@ -575,11 +593,11 @@ pipelineIlluminaMethylation.batch2 <- function(
 			annotation <- annotation[,index]
 		} else if(length(sampleNames(methLumi_data))>0){
       print(dim(methLumi_data))
-			#concatenate 'betas'
-			beta_i <- getMethylumiBeta(methLumi_data, alfa)
-			cat("\t beta_", i, " ok (", dim(beta_i)[1], "x", dim(beta_i)[2], ").\n")
+			#concatenate 'chanels'
+      
+			cat("\t Chanel_", i, " ok (", dim(unmethylated(methLumi_data))[1], "x", dim(unmethylated(methLumi_data))[2], ").\n")
 			detectionPval_i <- assayDataElement(methLumi_data, "detection")
-			cat("\t For all sub-projects: beta matrices concatenation & detection p-value matrices concatenation.\n")
+			cat("\t For all sub-projects: chanel matrices concatenation & detection p-value matrices concatenation.\n")
 			qc_i <- intensitiesByChannel(QCdata(methLumi_data))
 			rownames(qc_i[[1]]) <- toupper(rownames(qc_i[[1]]))
 			rownames(qc_i[[2]]) <- toupper(rownames(qc_i[[2]]))
@@ -587,7 +605,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[1]]))
 			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[2]]))
 			
-      if(length(which(colnames(beta_i)%in%colnames(beta)))!=0){
+      if(length(which(colnames(unmethylated(methLumi_data))%in%colnames(unMeth)))!=0){
         cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
         return(NULL)
       }
@@ -599,11 +617,6 @@ pipelineIlluminaMethylation.batch2 <- function(
       
 			qc[[1]] <- cbind(qc[[1]], qc_i[[1]])
 			qc[[2]] <- cbind(qc[[2]], qc_i[[2]])
-			
-			beta <- concatenateMatrices(beta, beta_i) ;
-			
-			detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
-			annotation <- annotation[ which(is.element(annotation$TargetID, rownames(beta))),]
 			
 			if(length(rownames(meth)) == length(rownames(methylated(methLumi_data)))){
 				if(all(rownames(meth) == rownames(methylated(methLumi_data)))){
@@ -641,31 +654,49 @@ pipelineIlluminaMethylation.batch2 <- function(
         rm(unMeth_i)
 				rm(meth_i)
 			}
-			rm(beta_i)
+      
+      detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
+      annotation <- annotation[ which(is.element(annotation$TargetID, rownames(unMeth))),]
+      
 			rm(qc_i)
 			
-			cat("\t beta ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
+			cat("\t Chanels ok (", dim(unMeth)[1], "x", dim(unMeth)[2], ").\n")
 			cat("\t detection p-values ok (", dim(detectionPval)[1], "x", dim(detectionPval)[2], ").\n")
 		}
 	}
 	
-	if(is.null(beta)){
+	if(is.null(unMeth) || is.null(meth)){
 		return(NULL)
 	}
-	
+  
+	if(qcAfterMerging){
+	  t <- qcAfterMerg(
+	    unMeth, 
+	    detectionPval, 
+	    detectionPval.threshold = detectionPval.threshold,
+	    detectionPval.perc.threshold = detectionPval.perc.threshold,
+	    detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
+	    PATH = PATH
+	  )
+	  unMeth <- t[[1]]
+	  detectionPval <- t[[2]]
+
+	  meth <- meth[which(rownames(meth)%in%rownames(unMeth)),which(colnames(meth)%in%colnames(unMeth))]
+	}
+  
+
 	############################################################################################
 	# Extraction of SNP probes ("rs" probes)
 	############################################################################################
 	
-	indexSNP <- grep(pattern="rs*", x=rownames(beta))
+	indexSNP <- grep(pattern="rs*", x=rownames(unMeth))
 	if(length(indexSNP)>0){
-		betaSNP <- beta[indexSNP,]
-		detectionPvalSNP <- detectionPval[indexSNP,]
+		mSNP <- log2((meth[indexSNP,]+alfa)/(unMeth[indexSNP,]+alfa))
 		
-		beta <- beta[-indexSNP,]
+    detectionPvalSNP <- detectionPval[indexSNP,]
 		detectionPval <- detectionPval[-indexSNP,]
 		
-		write.table(betaSNP, file=paste(PATH_RES, projectName, "_betaSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+		write.table(mSNP, file=paste(PATH_RES, projectName, "_betaSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 		write.table(detectionPvalSNP, file=paste(PATH_RES, projectName, "_detectionPvalueSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	}
 	
@@ -673,11 +704,10 @@ pipelineIlluminaMethylation.batch2 <- function(
 	if(length(indexSNP)>0){
 		unMeth <- unMeth[-indexSNP,]
 		meth <- meth[-indexSNP,]
-	}
+	}	
 	
 	
-	
-	############################################################################################
+	############################################################################################								
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
 	
@@ -687,6 +717,7 @@ pipelineIlluminaMethylation.batch2 <- function(
 	  write.table(meth, file=paste(PATH_RES, projectName, "_M_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
     
 	  beta <- getBetaMj(u=unMeth, m=meth, alfa=alfa)
+    head(beta)
     
     rm(unMeth, meth)
     

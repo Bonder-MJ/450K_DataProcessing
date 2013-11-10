@@ -22,6 +22,7 @@
 #
 
 preprocessIlluminaMethylation <- function(
+  qcAfterMerging = FALSE,
   path2data,
   path2controlData,
   projectName,
@@ -40,7 +41,6 @@ preprocessIlluminaMethylation <- function(
   PATH="./",
   QCplot=TRUE)
 {
-  
   #set pipeline steps counter
   i=0
   
@@ -126,7 +126,7 @@ preprocessIlluminaMethylation <- function(
     }
     
     # remove bad p-value samples
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+    if(!qcAfterMerging && (!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold))){
       methLumi_data <- detectionPval.filter(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
       cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_data)), ".\n")
     }
@@ -137,7 +137,7 @@ preprocessIlluminaMethylation <- function(
     }
     
     # remove bad probes
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2)){
+    if(!qcAfterMerging && (!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2))){
       methLumi_data <- detectionPval.filter2(methLumi_data, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
       cat("\t Project probes nb. after after P-value filtering: ", dim(unmethylated(methLumi_data))[1], ".\n")
     }
@@ -210,6 +210,7 @@ preprocessIlluminaMethylation <- function(
 #
 
 preprocessIlluminaMethylationIdat <- function(
+  qcAfterMerging = FALSE,
   methLumi_dataTmpData,
   sampleAnnotationInfomation,
   projectName,
@@ -227,7 +228,6 @@ preprocessIlluminaMethylationIdat <- function(
   PATH="./",
   QCplot=TRUE)
 {
-  
   featureData(methLumi_dataTmpData) <- sampleAnnotationInfomation
   #set pipeline steps counter
   i=0
@@ -288,7 +288,7 @@ preprocessIlluminaMethylationIdat <- function(
       return(NULL)
     }
     
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+    if(!qcAfterMerging && (!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold))){
       methLumi_dataTmpData <- detectionPval.filter(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
       cat("\t Project samples nb. after after P-value filtering: ", length(sampleNames(methLumi_dataTmpData)), ".\n")
     }
@@ -298,7 +298,7 @@ preprocessIlluminaMethylationIdat <- function(
       return(NULL)
     }
     
-    if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2)){
+    if(!qcAfterMerging(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2))){
       methLumi_dataTmpData <- detectionPval.filter2(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
       cat("\t Project probes nb. after after P-value filtering: ", dim(unmethylated(methLumi_dataTmpData))[1], ".\n")
     }
@@ -348,4 +348,48 @@ preprocessIlluminaMethylationIdat <- function(
   }
   
   return(methLumi_dataTmpData)
+}
+
+
+qcAfterMerg <- function(
+  matrix,
+  detectionP,
+  detectionPval.threshold=0.01,
+  detectionPval.perc.threshold=95,
+  detectionPval.perc.threshold2=1,
+  PATH = PATH
+  ){
+    if((!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)) || (!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2))){
+      cat("\n")
+      cat(" Start after merging sample QC & filtering...\n")
+      cat("\t Project samples nb. before QC: ", ncol(matrix), ", probes nb. before QC: ", nrow(matrix),".\n")
+      
+      if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold)){
+
+        t <- detectionPval.filter_2(matrix, detectionP, detectionPval.threshold, detectionPval.perc.threshold, projectName, PATH=PATH)
+        matrix <- t[[1]]
+        detectionP <- t[[2]]
+        cat("\t Project samples nb. after after P-value filtering: ", ncol(matrix), ".\n")
+      }
+         
+       if(ncol(matrix)==0){
+         cat("\t Warning: during sample QC all samples where removed.\n")
+         return(NULL)
+       }
+       
+       if(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2)){
+         t <- detectionPval.filter2_2(matrix, detectionP, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
+         matrix <- t[[1]]
+         detectionP <- t[[2]]
+         cat("\t Project probes nb. after after P-value filtering: ", dim(matrix)[1], ".\n")
+       }
+       
+       if(ncol(matrix)==0 && colnames(matrix)){
+         cat("\t Warning: during sample QC all probes where removed.\n")
+         return(NULL)
+       }
+       cat("\t...done.\n\n")
+         
+    }
+    return(list(matrix,detectionP))
 }
