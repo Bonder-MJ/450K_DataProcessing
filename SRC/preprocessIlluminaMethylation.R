@@ -298,7 +298,7 @@ preprocessIlluminaMethylationIdat <- function(
       return(NULL)
     }
     
-    if(!qcAfterMerging(!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2))){
+    if(!qcAfterMerging && (!is.null(detectionPval.threshold) && !is.null(detectionPval.perc.threshold2))){
       methLumi_dataTmpData <- detectionPval.filter2(methLumi_dataTmpData, detectionPval.threshold, detectionPval.perc.threshold2, projectName, PATH=PATH)
       cat("\t Project probes nb. after after P-value filtering: ", dim(unmethylated(methLumi_dataTmpData))[1], ".\n")
     }
