@@ -6,6 +6,7 @@
 #
 pipelineIlluminaMethylation.batch <- function(
 	PATH_PROJECT_DATA,
+	PATH_Annot,
 	projectName,
 	qcAfterMerging = FALSE,
 	nbBeads.threshold,
@@ -93,7 +94,7 @@ pipelineIlluminaMethylation.batch <- function(
       cat("\t...data loaded..\n\n")
       
       if(is.null(sampleAnnotationInfomation)){
-        annotationFile <- paste(getwd(),"/ADDITIONAL_INFO/ProbeAnnotation/ProbeInformationSample.txt", sep="")
+        annotationFile <- paste(PATH_Annot,"/ProbeAnnotation/ProbeInformationSample.txt", sep="")
         if(file.exists(annotationFile)){
 #           sampleAnnotationInfomation <- read.table(file=annotationFile,header=T, sep="\t", quote = "")
           sampleAnnotationInfomation <- read.AnnotatedDataFrame(file=annotationFile,header=T, sep="\t", quote = "")
@@ -340,6 +341,7 @@ pipelineIlluminaMethylation.batch <- function(
 #
 pipelineIlluminaMethylation.batch2 <- function(
 	PATH_PROJECT_DATA,
+	PATH_Annot,
 	projectName,
 	qcAfterMerging = FALSE,
 	nbBeads.threshold,
@@ -432,7 +434,7 @@ pipelineIlluminaMethylation.batch2 <- function(
       cat("\t...data loaded..\n\n")
       
       if(is.null(sampleAnnotationInfomation)){
-        annotationFile <- paste(getwd(),"/ADDITIONAL_INFO/ProbeAnnotation/ProbeInformationSample.txt", sep="")
+        annotationFile <- paste(PATH_Annot,"/ProbeAnnotation/ProbeInformationSample.txt", sep="")
         if(file.exists(annotationFile)){
 #           sampleAnnotationInfomation <- read.table(file=annotationFile,header=T, sep="\t", quote = "")
           sampleAnnotationInfomation <- read.AnnotatedDataFrame(file=annotationFile,header=T, sep="\t", quote = "")

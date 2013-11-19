@@ -92,6 +92,9 @@ setwd("")
 # set PATH to R pipeline's scripts for script sourcing
 PATH_SRC <- "./SRC/"
 #
+# set PATH to R pipeline's additional information for script sourcing
+PATH_Annot <- "./ADDITIONAL_INFO/"
+#
 # set PATH to results folder
 PATH_RES <- "./RES/"
 #
@@ -105,8 +108,7 @@ PATH_PROJECT_DATA <- "./DATA/"
 
 #
 # set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
-PATH_ProbeSNP_LIST <- c("./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", "./ADDITIONAL_INFO/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt")
-#PATH_ProbeSNP_LIST <- "./ADDITIONAL_INFO/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt"
+PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
 #PATH_ProbeSNP_LIST <- NULL
 #
 #######################################
@@ -118,7 +120,7 @@ projectName = "ILLUMINA450K"
 #Perform bead and P-value filtering after final merging.
 qcAfterMerging = TRUE
 # Minimal bead number for considering that a probe worked. If = NULL, does not perform bead nb. based filtering.
-nbBeads.threshold = 4
+nbBeads.threshold = 3
 #
 # Threshold for detection p-values significance. A signal is considered as significant if its associated detection p-values < this threshold (0.01 by default).
 detectionPval.threshold = 0.01
@@ -170,11 +172,11 @@ QCplot=FALSE
 #Normalization procedure by Pidsley et al.
 #NormProcedure = "DASEN"
 #Normalization procedure by Pidsley et al.
-#NormProcedure = "NASEN"
+NormProcedure = "NASEN"
 #No normalization, returns only beta / M
 #NormProcedure = "None"
 #No normalization, returns beta / M including data on the individual chanels.
-NormProcedure = "None2"
+#NormProcedure = "None2"
 
 #When using M-val do a Median replacement for missing values.
 medianReplacement = FALSE;
@@ -193,7 +195,7 @@ includeQuantileNormOverChanel = FALSE
 MvalueConv = TRUE
 
 # Write Rdata / txt / both
-outputType = "Rdata"
+outputType = "both"
 
 #
 ##############################################
@@ -268,6 +270,7 @@ print(paste(NormProcedure ,"normalization procedure"))
 if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2" && NormProcedure != "NASEN" && NormProcedure != "None2"){
   data.preprocess.norm <- pipelineIlluminaMethylation.batch(
     PATH_PROJECT_DATA,
+	PATH_Annot = PATH_Annot,
     projectName = projectName,
 	qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
@@ -293,6 +296,7 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
 } else {
   data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
     PATH_PROJECT_DATA,
+	PATH_Annot = PATH_Annot,
     projectName = projectName,
 	qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
