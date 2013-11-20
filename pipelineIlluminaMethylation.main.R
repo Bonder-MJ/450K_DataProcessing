@@ -185,7 +185,7 @@ medianReplacement = FALSE;
 alfa = 100
 
 # Do QN after normalization, on beta values
-betweenSampleCorrection = TRUE
+betweenSampleCorrection = FALSE
 
 # Do QN before normalization, on the individual chanels
 # This is performed over each sub-project individualy.
