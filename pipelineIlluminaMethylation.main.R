@@ -5,7 +5,7 @@
 # m.j.bonder @ umcg.nl
 #
 ############################
-# Release data: 20-11-2013 #
+# Release data: 25-11-2013 #
 ############################
 #
 #######################
@@ -15,40 +15,39 @@
 #
 #################
 # Pre-requisites:
-# - install last 'lumi' and 'methylumi' bioconductor packages
 # - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "compiler"
-# - data format (1 raw data):
-#	- raw idat files
-# - data format (2 genomestudio):
-#	- raw methylation data: methylation data have to be extracted with GenomeStudio in two text files, one corresponding to sample methylation informations and the second one to control probe informations.
-#		- sample methylation informations: must contain the following columns in addition to the columns pre-selected by GenomeStudio(before exporting to '.txt' files the extracted informations).
-#  		. Index
-#			. TargetID
-#			. INFINIUM_DESIGN_TYPE
-#			. Color_Channel
-#			. CHR
-#			. Mapinfo (probe position for hg19
-#			. COORDINATE_36 (probe position for hg18)
-#			. STRAND
-#			. Probe_SNPS
-#			. Probe_SNPS_10
-#			. UCSC_Refgene_Name
-#			. UCSC_Refgene_Accession
-#			. UCSC_Refgene_Group
-#			. Relation_To_UCSC_CPG_Island
-#			. DetectionPval
-#			. Signal_A
-#			. Signal_B
-#			. Avg_NBEADS_A
-#			. Avg_NBEADS_B
-#		- control probes methylation informations: all columns
-#		- additional data:
-#			- sample IDs list in case of only a subset of the loaded samples have to be processed and normalized (to remove control samples for example): simple text file, with no header and with one sample ID per line.
-#			- probe IDs list for probe filtering (probe associated to frequent SNP for example): simple text file with one probe ID per line.
-#				We provide 36 lists of probes associated to frequent SNP obtained from the 1000 genome project (these 36 lists correspond to 18 different human populations. See ADDITIONAL_INFO folder) :
-# 				- list of probes associated to SNP with alternative allele frequency >= 5% (the most stringent list)
-# 				- list of probes associated to SNP with alternative allele frequency >= 10%
-#			We consider that a probe is associated to a frequent SNP if a frequent SNP is located inside the probe sequence or if it is located in +1 (for Infinium I probes) or +2 (for Infinium II probes) position from probe's query site.
+# - data formats
+#   - idat files
+#   - genomestudio files
+# -Idat files:
+# 	- raw idat files.
+# - Genomestudio:
+#	  - raw methylation data: methylation data have to be extracted with GenomeStudio in two text files, one corresponding to sample methylation informations and the second one to control probe informations.
+#		  - sample methylation informations: must contain the following columns in addition to the columns pre-selected by GenomeStudio(before exporting to '.txt' files the extracted informations).
+#  		  . Index
+#			  . TargetID
+#			  . INFINIUM_DESIGN_TYPE
+#			  . Color_Channel
+#			  . CHR
+#			  . Mapinfo (probe position for hg19
+#			  . COORDINATE_36 (probe position for hg18)
+#			  . STRAND
+#			  . Probe_SNPS
+#			  . Probe_SNPS_10
+#			  . UCSC_Refgene_Name
+#			  . UCSC_Refgene_Accession
+#			  . UCSC_Refgene_Group
+#			  . Relation_To_UCSC_CPG_Island
+#			  . DetectionPval
+#			  . Signal_A
+#			  . Signal_B
+#			  . Avg_NBEADS_A
+#			  . Avg_NBEADS_B
+#		  - control probes methylation informations: all columns
+# - additional data:
+#	  - sample IDs list in case of only a subset of the loaded samples have to be processed and normalized (to remove control samples for example): simple text file, with no header and with one sample ID per line.
+#		- probe IDs list for probe filtering (probe associated to frequent SNP for example): simple text file with one probe ID per line.
+#		We provide lists of probes associated to frequent SNP obtained from the 1000 genome project or GoNL (See ADDITIONAL_INFO folder for more information)
 #
 ####################
 # PIPELINE'S STEPS #
@@ -62,7 +61,6 @@
 # 5. Source this script, in R environment, by using the command 'source("pathToThisScript/pipelineIlluminaMethylation.R").
 # 6. Results are automatically saved, in 4 files (beta values, detection p-values and the same informations for SNP probes ("rs" probes that are removed befor data normalization)), as matrices.
 # 7. Start the "real" exciting work !
-#
 #
 ###########
 # OUTPUTS #
@@ -93,6 +91,9 @@
 #set working directory
 setwd("")
 #
+# If working on Windows set this:
+#memory.limit(20000)
+#
 # set PATH to R pipeline's scripts for script sourcing
 PATH_SRC <- "./SRC/"
 #
@@ -107,9 +108,7 @@ PATH_RES <- "./RES/"
 #	- control probes file: file name must starts with the pattern "TableControl"
 #	- raw sample methylation file: file name must starts with the pattern "TableSample"
 #	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList" ** Also needed for idat filtering
-
 PATH_PROJECT_DATA <- "./DATA/"
-
 #
 # set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
 PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
@@ -121,9 +120,12 @@ PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToF
 # The name that will be given to result files
 projectName = "ILLUMINA450K"
 #
+####################
+#Sample and probe QC
+#
 #Perform bead and P-value filtering after final merging.
 qcAfterMerging = TRUE
-# Minimal bead number for considering that a probe worked. If = NULL, does not perform bead nb. based filtering.
+# Minimal bead number for considering that a probe worked. If = NULL, does not perform bead nb. based filtering. Probes with less beads will get a P-value of 1.
 nbBeads.threshold = 3
 #
 # Threshold for detection p-values significance. A signal is considered as significant if its associated detection p-values < this threshold (0.01 by default).
@@ -132,9 +134,14 @@ detectionPval.threshold = 0.01
 # Percentage of significant probe methylation signals in a given sample (by default, >80% for "good quality" samples). This is used for samples QC and filtering. All samples that do not respect this condition will be removed from the analysis.
 # If set to NULL this will not be performed
 detectionPval.perc.threshold = 95
+#
 # Percentage of significant sample methylation signals in a given probe (by default, >1% for "good quality" probes). This is used for probe QC and filtering. All probes that do not respect this condition will be removed from the analysis.
 # If set to NULL this will not be performed
 detectionPval.perc.threshold2 = 1
+#
+#Cut-offs are designed based on a set of >65000 450k samples. Minimum was set to 25% quantile - 1.5 * IQR, ratio was set to 75% quantile + 3* IQR. All ratios where transformed so they were higher than 1, the factor in the IQR was also chosen to be higher due to this.
+minimalAverageChanelValue = 1966.538
+maxratioDifference = 1.691505
 #
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
 sampleSelection = F
@@ -142,65 +149,73 @@ sampleSelection = F
 # if "allosomal" only X and Y probes are returned, if "autosomal" only the non X and Y probes are returned. Any other value will return every thing.
 XY.filtering = "autosomal"
 #
-# if 'TRUE' performs a color bias correction of methylated and unmethylated signals.
-colorBias.corr = TRUE
+###################
+######Normalization
+#
+#Set alfa, used during transformation from U + M to Beta value
+alfa = 100
+#
+# if 'TRUE' performs a color bias correction of methylated and unmethylated signals, per plate.
+# Set to "no" for DASEN or NASEN. For other processes this is the only place where color bias correction is performed.
+colorBias.corr = FALSE
 #
 # if 'TRUE' a additional sample filtering based on average M and U values is preformed. 
 average.U.M.Check = TRUE
-
-#Cut-offs are designed based on a set of >65000 450k samples. Minimum was set to 25% quantile - 1.5 * IQR, ratio was set to 75% quantile + 3* IQR. All ratios where transformed so they were higher than 1, the factor in the IQR was also chosen to be higher due to this.
-minimalAverageChanelValue = 1966.538
-maxratioDifference = 1.691505
 #
 # If "separatecolors", performs a separate color bg adjustement (recommended), if "unseparatecolors" performs a non separate color bg adjustement , if "no" don't perform any bg adjustement.
-bg.adjust = "separatecolors"
+# Set to "no" for DASEN or NASEN. For other processes this is the only place where background correction is performed.
+bg.adjust = "no"
 #
-# Specifying which kind of probe annotation to use for probe categories construction, must be one of "relationToCpG" or "relationToSequence". We recommand the more robust option: probeAnnotationsCategory = "relationToCpG".
-probeAnnotationsCategory = "relationToCpG"
+# Do QN before normalization, on the individual chanels
+# This is performed over each sub-project individualy.
+includeQuantileNormOverChanel = FALSE
 #
 # If QCplot==TRUE, performs and plots hierarchical clustering and plots methylation density curves.
 QCplot=FALSE
 #
 # Select the normalization procedure. Switch between SQN / SWAN / M-Value / M-value2 / DASEN correction and BMIQ. If not given this will default to SQN
-
-#Normalization procedure by Touleimat & Tost.
-#NormProcedure = "SQN"
-#Normalization procedure by Maksimovic et al.
-#NormProcedure = "SWAN"
-#Normalization procedure by Teschendorff et al.
-#NormProcedure = "BMIQ"
-#Normalization procedure by Dedeurwaerder et al. (Based on beta values)
-#NormProcedure = "M-ValCor"
-#Normalization procedure by Dedeurwaerder et al. (Based on m-values directly.)
-#NormProcedure = "M-ValCor2"
-#Normalization procedure by Pidsley et al.
-#NormProcedure = "DASEN"
-#Normalization procedure by Pidsley et al.
-NormProcedure = "NASEN"
-#No normalization, returns only beta / M
-#NormProcedure = "None"
-#No normalization, returns beta / M including data on the individual chanels.
-#NormProcedure = "None2"
-
+  #
+  #Normalization procedure by Touleimat & Tost.
+  #NormProcedure = "SQN"
+  # Setting specific for SQN
+  # Specifying which kind of probe annotation to use for probe categories construction, must be one of "relationToCpG" or "relationToSequence". We recommand the more robust option: probeAnnotationsCategory = "relationToCpG".
+  probeAnnotationsCategory = "relationToCpG"
+  #
+  #Normalization procedure by Maksimovic et al.
+  #NormProcedure = "SWAN"
+  #
+  #Normalization procedure by Teschendorff et al.
+  #NormProcedure = "BMIQ"
+  #
+  #Normalization procedure by Dedeurwaerder et al. (Based on beta values)
+  #NormProcedure = "M-ValCor"
+  #
+  #Normalization procedure by Dedeurwaerder et al. (Based on M-values directly.)
+  #NormProcedure = "M-ValCor2"
+  #
+  #Normalization procedure by Pidsley et al.
+  NormProcedure = "DASEN"
+  #
+  #Normalization procedure by Pidsley et al.
+  #NormProcedure = "NASEN"
+  #
+  #No normalization
+  #NormProcedure = "None"
+  #
+  #No normalization
+  #NormProcedure = "None2"
+#
 #When using M-val do a Median replacement for missing values.
 medianReplacement = FALSE;
-
-#Set alfa, used during transformation from U + M to Beta value
-alfa = 100
-
+#
 # Do QN after normalization, on beta values
 betweenSampleCorrection = FALSE
-
-# Do QN before normalization, on the individual chanels
-# This is performed over each sub-project individualy.
-includeQuantileNormOverChanel = FALSE
-
-# Do M-value conversion.
+#
+# Output M-Values.
 MvalueConv = TRUE
-
+#
 # Write Rdata / txt / both
 outputType = "both"
-
 #
 ##############################################
 #####  NOW YOU CAN SOURCE THIS SCRIPT !  #####
