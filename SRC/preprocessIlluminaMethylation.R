@@ -73,6 +73,12 @@ preprocessIlluminaMethylation <- function(
     cat("\t...done.\n\n")
   }
   
+  #Filter any non annotated probes
+  probeFilter <- fData(methLumi_data)$TargetID[ which(fData(methLumi_data)$CHR=="-") ]
+  indexFilter <- which(is.element(featureNames(methLumi_data), probeFilter))
+  if(length(indexFilter) > 0) methLumi_data <- methLumi_data[-indexFilter,]
+  rm(probeFilter, indexFilter)
+  
   # XY chz filtering
   if(tolower(XY.filtering)=="autosomal"){
     i <- i+1
@@ -236,6 +242,12 @@ preprocessIlluminaMethylationIdat <- function(
   if(QCplot){
     plotQC(getMethylumiBeta(methLumi_dataTmpData), figName=paste(projectName, "_beta.raw", sep=""), PATH = PATH)
   }
+  
+  #Filter any non annotated probes
+  probeFilter <- fData(methLumi_data)$TargetID[ which(fData(methLumi_data)$CHR=="-") ]
+  indexFilter <- which(is.element(featureNames(methLumi_data), probeFilter))
+  if(length(indexFilter) > 0) methLumi_data <- methLumi_data[-indexFilter,]
+  rm(probeFilter, indexFilter)
   
   # XY chz filtering
   if(tolower(XY.filtering)=="autosomal"){

@@ -5,8 +5,15 @@
 # m.j.bonder @ umcg.nl
 #
 ############################
-# Release data: 25-11-2013 #
+# Release data: 26-11-2013 #
 ############################
+#
+########################################################################################################
+#                                                 Warning                                              #
+# Added new probe annotation to replace the default genome studio probe annotations.                   #
+# This can be changed by renaming the probe annotation files in: ".\ADDITIONAL_INFO\ProbeAnnotation\". #
+# With the new annotation SQN with "relationToSequence" is no longer supported                         #
+########################################################################################################
 #
 #######################
 #### TO READ FIRST ####
