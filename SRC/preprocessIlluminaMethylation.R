@@ -244,9 +244,9 @@ preprocessIlluminaMethylationIdat <- function(
   }
   
   #Filter any non annotated probes
-  probeFilter <- fData(methLumi_data)$TargetID[ which(fData(methLumi_data)$CHR=="-") ]
-  indexFilter <- which(is.element(featureNames(methLumi_data), probeFilter))
-  if(length(indexFilter) > 0) methLumi_data <- methLumi_data[-indexFilter,]
+  probeFilter <- fData(methLumi_dataTmpData)$TargetID[ which(fData(methLumi_dataTmpData)$CHR=="-") ]
+  indexFilter <- which(is.element(featureNames(methLumi_dataTmpData), probeFilter))
+  if(length(indexFilter) > 0) methLumi_dataTmpData <- methLumi_dataTmpData[-indexFilter,]
   rm(probeFilter, indexFilter)
   
   # XY chz filtering
