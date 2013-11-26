@@ -118,7 +118,8 @@ PATH_RES <- "./RES/"
 PATH_PROJECT_DATA <- "./DATA/"
 #
 # set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
-PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
+#PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
+PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq1percent/probeToFilter_450K_GoNL.hg19.ALL_alleleFreq1percent_SBESiteTII.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
 #PATH_ProbeSNP_LIST <- NULL
 #
 #######################################

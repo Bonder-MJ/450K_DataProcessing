@@ -8,8 +8,10 @@
 ##################################
 
 dasen <- function(mns, uns, onetwo, alfa=100, MvalueConv=TRUE, ...){
+   
    mnsc <- dfsfit(mns,  onetwo, ...)  
    unsc <- dfsfit(uns,  onetwo, roco=NULL)
+   
    mnsc[onetwo=='I' ,] <- normalize.quantiles(mnsc[onetwo=='I', ])
    unsc[onetwo=='I' ,] <- normalize.quantiles(unsc[onetwo=='I', ])
    
@@ -68,8 +70,6 @@ dfsfit <-
       byrow=T, 
       nrow=sum(onetwo=='I')
     )
-    print(dim(onetwo))
-    print(dim(mn))
     mn[onetwo=='I',] <- mn[onetwo=='I',] - otcor
     mn
   }
