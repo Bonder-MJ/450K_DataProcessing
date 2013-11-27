@@ -44,7 +44,7 @@ dasen <- function(mns, uns, onetwo, alfa=100, MvalueConv=TRUE, ...){
 dfsfit <- function(
   mn, 
   onetwo,
-  roco=unlist(data.frame(strsplit(collnames(mn), '_'), stringsAsFactors=FALSE)[2,])   
+  roco=unlist(data.frame(strsplit(colnames(mn), '_'), stringsAsFactors=FALSE)[2,])   
   ){
     mdf<-apply(mn,2,dfs2,onetwo)
         
