@@ -160,12 +160,7 @@ normalizeIlluminaMethylationBMIQ <- function(
 	rm(probeAnnotations)
 	normalizedBeta <- beta;
 	
-	##Something strange with sample 34, 41
-	##166/278
-	
 	for(k in 1: ncol(beta)){
-	#foreach(i=1:ncol(beta)) %dopar% {
-		#source(paste(PATH_SRC,"Additions\\BMIQ_1.1_Pipeline.R", sep=""))
 		dataOut <- BMIQ(as.vector(unlist(beta[,k])), as.vector(unlist(bmiqAnnotation[,2])), 3, FALSE, nfit=10000, th1.v=c(0.2,0.75), th2.v=NULL, niter=5, tol=0.001, plots=QCplot, sampleID=k)
 		normalizedBeta[,k] <- as.array(dataOut[[1]])
 		rm(dataOut)
@@ -277,7 +272,7 @@ normalizeIlluminaMethylationNASEN <- function(
     }
   }
   
-  ##Do QN over samples after DASEN?
+  ##Do QN over samples after NASEN?
   if(betweenSampleCorrection==TRUE){
     normalizedBeta2 <- normalize.quantiles(as.matrix(normalizedBeta))
     rownames(normalizedBeta2) <- rownames(normalizedBeta)
