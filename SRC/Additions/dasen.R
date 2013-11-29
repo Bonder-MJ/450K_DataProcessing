@@ -62,7 +62,7 @@ dfsfit <- function(
       nrow=sum(onetwo=='I')
     )
     
-    mn[onetwo=='I',] <- mn[onetwo=='I',] - otcor[,1]
+    mn[onetwo=='I',] <- mn[onetwo=='I',] - otcor
     mn
   }
 

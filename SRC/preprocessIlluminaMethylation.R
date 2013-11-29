@@ -234,6 +234,9 @@ preprocessIlluminaMethylationIdat <- function(
   PATH="./",
   QCplot=TRUE)
 {
+  
+  methLumi_dataTmpData <- methLumi_dataTmpData[order(row.names(unmethylated(methLumi_dataTmpData))),]
+  
   featureData(methLumi_dataTmpData) <- sampleAnnotationInfomation
   #set pipeline steps counter
   i=0

@@ -96,8 +96,8 @@ pipelineIlluminaMethylation.batch <- function(
       if(is.null(sampleAnnotationInfomation)){
         annotationFile <- paste(PATH_Annot,"/ProbeAnnotation/ProbeInformationSample.txt", sep="")
         if(file.exists(annotationFile)){
-#           sampleAnnotationInfomation <- read.table(file=annotationFile,header=T, sep="\t", quote = "")
           sampleAnnotationInfomation <- read.AnnotatedDataFrame(file=annotationFile,header=T, sep="\t", quote = "")
+		  sampleAnnotationInfomation<- sampleAnnotationInfomation[order(sampleAnnotationInfomation$TargetID),]
         } else {
           cat("No annotation file present can not read .idat files.\nSkipping directory.\n")
           next;
@@ -436,8 +436,8 @@ pipelineIlluminaMethylation.batch2 <- function(
       if(is.null(sampleAnnotationInfomation)){
         annotationFile <- paste(PATH_Annot,"/ProbeAnnotation/ProbeInformationSample.txt", sep="")
         if(file.exists(annotationFile)){
-#           sampleAnnotationInfomation <- read.table(file=annotationFile,header=T, sep="\t", quote = "")
           sampleAnnotationInfomation <- read.AnnotatedDataFrame(file=annotationFile,header=T, sep="\t", quote = "")
+		  sampleAnnotationInfomation<- sampleAnnotationInfomation[order(sampleAnnotationInfomation$TargetID),]
         } else {
           cat("No annotation file present can not read .idat files.\nSkipping directory.\n")
           next;
@@ -449,7 +449,7 @@ pipelineIlluminaMethylation.batch2 <- function(
       #############################
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
-        qcAfterMerging =qcAfterMerging,
+        qcAfterMerging = qcAfterMerging,
         methLumi_dataTmpData,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
@@ -528,7 +528,7 @@ pipelineIlluminaMethylation.batch2 <- function(
   		#############################
   
   		methLumi_data <- preprocessIlluminaMethylation(
-  		  qcAfterMerging =qcAfterMerging,
+  		  qcAfterMerging = qcAfterMerging,
   			path2data = path2data,
   			path2controlData = path2controlData,
   			projectName = projectName_batch,

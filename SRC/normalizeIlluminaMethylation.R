@@ -199,7 +199,7 @@ normalizeIlluminaMethylationDASEN <- function(
 
 	ann <- as.array((annotation$INFINIUM_DESIGN_TYPE))
 	rownames(ann) <- annotation$TargetID
-  keepList <- which(rownames(ann) %in% rownames(unMeth))
+	keepList <- which(rownames(ann) %in% rownames(unMeth))
 	ann <- ann[keepList]
   
   unMeth <- unMeth[order(rownames(unMeth)),]
