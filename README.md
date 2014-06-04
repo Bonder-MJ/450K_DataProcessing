@@ -1,9 +1,8 @@
-=====================================================================
-=                       450K DataProcessing                         =
-=====================================================================
+450K DataProcessing
+================
 
 Pipeline for processing of Illumina 450K data. In this script we 
-incorporated mltiple 450k normalization methods. 
+incorporated multiple 450k normalization methods. 
 
 See "pipelineIlluminaMethylation.main.R" for instruction on how
 to use the script.
