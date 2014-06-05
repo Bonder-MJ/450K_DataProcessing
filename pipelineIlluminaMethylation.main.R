@@ -5,7 +5,7 @@
 # m.j.bonder @ umcg.nl
 #
 ############################
-# Release data: 13-12-2013 #
+# Release data: 05-06-2014 #
 ############################
 #
 ########################################################################################################
@@ -19,11 +19,12 @@
 #### TO READ FIRST ####
 #######################
 # This script, when sourced ( source("pipelineIlluminaMethylation.main.R") ), loads raw methylation data and performs a complete preprocessing and normalization of a batch of Illumina 450K data (corresponding to different plates).
+# Please read and change carefully! Read up untill: "NOW YOU CAN SOURCE THIS SCRIPT !"
 #
 #################
 # Pre-requisites:
 # - install last 'lumi' and 'methylumi' bioconductor packages
-# - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "compiler"
+# - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats", "IlluminaHumanMethylation450k.db" and "compiler"
 # - data format (1 raw data):
 #	- raw idat files
 # - data format (2 genomestudio):
@@ -97,7 +98,7 @@
 ##############################
 #
 ### PATHs to files and folders
-#set working directory
+#set working directory (If necessary)
 setwd("")
 #
 # If working on Windows set this:
@@ -119,7 +120,7 @@ PATH_RES <- "./RES/"
 #	- sample IDs file for sample selection (not compulsory): file name must contain the pattern "sampleList" ** Also needed for idat filtering
 PATH_PROJECT_DATA <- "./DATA/"
 #
-# set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
+## set PATH to the file with frequent SNP informations, on which SNP filtering is based. If = NULL, no probe removed. Can handle arrays of filenames.
 #PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq5percent/probeToFilter_450K_1000G_omni2.5.hg19.EUR_alleleFreq5percent_50bp_wInterroSite.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
 PATH_ProbeSNP_LIST <- c(paste(PATH_Annot, "/ProbeFiltering/freq1percent/probeToFilter_450K_GoNL.hg19.ALL_alleleFreq1percent.txt", sep=""), paste(PATH_Annot, "/ProbeFiltering/ProbesBindingNonOptimal/Source&BSProbesMappingMultipleTimesOrNotBothToBSandNormalGenome.txt", sep=""))
 #PATH_ProbeSNP_LIST <- NULL
@@ -155,10 +156,6 @@ average.U.M.Check = FALSE
 #Cut-offs are designed based on a set of >65000 450k samples. Minimum was set to 25% quantile - 1.5 * IQR, ratio was set to 75% quantile + 3* IQR. All ratios where transformed so they were higher than 1, the factor in the IQR was also chosen to be higher due to this.
 minimalAverageChanelValue = 1966.538
 maxratioDifference = 1.691505
-#
-#Medall, Cut-offs are designed based on a set of >2000 450k samples.
-#minimalAverageChanelValue = 3108.038
-#maxratioDifference = 1.292633
 #
 # If sampleSelection= FALSE , all loaded samples will be processed and normalized, if sampleSelection = TRUE, a sample IDs text list, with no header and with the pattern "sampleList" in file name, will be loaded and used to select the samples to preprocess and normalize.
 sampleSelection = F
@@ -247,8 +244,8 @@ require(preprocessCore)
 require(minfi)
 require(matrixStats)
 require(compiler)
-
-enableJIT(1)
+require(IlluminaHumanMethylation450k.db)
+enableJIT(3)
 
 source(paste(PATH_SRC,"loadMethylumi2.R", sep=""))
 source(paste(PATH_SRC,"lumiMethyR2.R", sep=""))
@@ -304,9 +301,9 @@ print(paste(NormProcedure ,"normalization procedure"))
 if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-ValCor2" && NormProcedure != "NASEN" && NormProcedure != "None2"){
   data.preprocess.norm <- pipelineIlluminaMethylation.batch(
     PATH_PROJECT_DATA,
-	PATH_Annot = PATH_Annot,
+    PATH_Annot = PATH_Annot,
     projectName = projectName,
-	qcAfterMerging = qcAfterMerging,
+    qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,
@@ -330,9 +327,9 @@ if(NormProcedure != "SWAN" && NormProcedure != "DASEN" && NormProcedure != "M-Va
 } else {
   data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
     PATH_PROJECT_DATA,
-	PATH_Annot = PATH_Annot,
+    PATH_Annot = PATH_Annot,
     projectName = projectName,
-	qcAfterMerging = qcAfterMerging,
+    qcAfterMerging = qcAfterMerging,
     nbBeads.threshold = nbBeads.threshold,
     detectionPval.threshold = detectionPval.threshold,
     detectionPval.perc.threshold = detectionPval.perc.threshold,
