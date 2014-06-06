@@ -1,10 +1,10 @@
-# 2011-2012
-# Nizar TOULEIMAT
-# nizar.touleimat @ cng.com
+# 2011-2012-2013
+# Bonder
+# bonder.m.j @ gmail.com
 #
-# This function performs a complete Illumina 450K array data preprocessing and subset quantile normalization for a data batch (set of 450K "plates").
+# This function performs a complete Illumina 450K array data preprocessing other normalization methods, for a data batch (set of 450K "plates").
 #
-pipelineIlluminaMethylation.batch <- function(
+pipelineIlluminaMethylation.batch2 <- function(
 	PATH_PROJECT_DATA,
 	PATH_Annot,
 	projectName,
@@ -23,11 +23,12 @@ pipelineIlluminaMethylation.batch <- function(
 	bg.adjust,
 	PATH,
 	QCplot=TRUE,
-	betweenSampleCorrection = betweenSampleCorrection,
+	betweenSampleCorrection = TRUE,
 	includeQuantileNormOverChanel = includeQuantileNormOverChanel,
 	alfa=100,
 	NormProcedure,
-	medianReplacement
+	medianReplacement = TRUE,
+	MvalueConv
  ){
 
 	####################################
@@ -35,17 +36,20 @@ pipelineIlluminaMethylation.batch <- function(
 	####################################
 	subProjects <- dir(PATH_PROJECT_DATA)
 	
-	beta <- NULL
+	unMeth <- NULL
+	meth <- NULL
 	detectionPval <- NULL
 	annotation <- NULL
 	sampleAnnotationInfomation <- NULL
 	path2sampleList <- NULL
+  
+	readFromIdat <- FALSE
+	readFromOriginalInput <- FALSE
 	
 	#for all subprojects
 	for(i in 1:length(subProjects)){
 	  
     methLumi_data <- NULL
-    
 		projectName_batch <- subProjects[i]
 		sampleTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableSample")
 		controlTable <- dir(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern="TableControl")
@@ -54,6 +58,7 @@ pipelineIlluminaMethylation.batch <- function(
 
     #####
     if(length(sampleTable) < 1 && length(controlTable) < 1 && length(list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat"))>0){
+      
       barcode<- list.files(paste(PATH_PROJECT_DATA, projectName_batch, "/", sep=""), pattern=".idat")
       
       barcode <- gsub("_Grn.idat","",x=barcode)
@@ -109,7 +114,7 @@ pipelineIlluminaMethylation.batch <- function(
       #############################
       
       methLumi_data <- preprocessIlluminaMethylationIdat(
-        qcAfterMerging =qcAfterMerging,
+        qcAfterMerging = qcAfterMerging,
         methLumi_dataTmpData,
         sampleAnnotationInfomation,
         projectName = projectName_batch,
@@ -128,6 +133,13 @@ pipelineIlluminaMethylation.batch <- function(
         QCplot = QCplot
       )
       rm(methLumi_dataTmpData)
+      
+      if(is.null(methLumi_data)){
+        next;
+      }
+      
+      readFromIdat=TRUE
+      
     } else {
   		if(length(sampleTable) > 1){
   			warning <- "\tWARNING ! Sample table: too many files matching with pattern 'TableSample' ! \n"
@@ -181,7 +193,7 @@ pipelineIlluminaMethylation.batch <- function(
   		#############################
   
   		methLumi_data <- preprocessIlluminaMethylation(
-  		  qcAfterMerging =qcAfterMerging,
+  		  qcAfterMerging = qcAfterMerging,
   			path2data = path2data,
   			path2controlData = path2controlData,
   			projectName = projectName_batch,
@@ -200,15 +212,23 @@ pipelineIlluminaMethylation.batch <- function(
   			PATH = PATH_RES,
   			QCplot = QCplot
   		)
+      
+  		if(is.null(methLumi_data)){
+  		  next;
+  		}
+  		readFromOriginalInput=TRUE
     }
 		
-		if(is.null(methLumi_data)){
-			next;
-		}
+		
     
 		################################################
 		# Sub-project data & information concatenation #
 		################################################
+
+    if(readFromOriginalInput==TRUE && readFromIdat==TRUE){
+      cat("Warning: In SWAN & NASEN & DASEN & M-ValCor2 preprocessing no mixing of input types is allowed.\n")
+      return(NULL)
+    }
     
     if(includeQuantileNormOverChanel){
       methLumi_data_un <-normalize.quantiles(as.matrix(unmethylated(methLumi_data)))
@@ -222,115 +242,213 @@ pipelineIlluminaMethylation.batch <- function(
       methylated(methLumi_data) <- methLumi_data_me
       rm(methLumi_data_un, methLumi_data_me)
     }
-
-    if(is.null(beta) && length(sampleNames(methLumi_data))>0){
-			beta <- getMethylumiBeta(methLumi_data, alfa)
-			cat("\t beta plate", i, " ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
+    
+		if(is.null(unMeth) && length(sampleNames(methLumi_data))>0){			
+			unMeth <- unmethylated(methLumi_data)
+			meth <- methylated(methLumi_data)
+      qc <- intensitiesByChannel(QCdata(methLumi_data)) 
+			rownames(qc[[1]]) <- toupper(rownames(qc[[1]]))
+			rownames(qc[[2]]) <- toupper(rownames(qc[[2]]))
+			
+			cat("\t Chanels plate", i, " ok (", dim(unMeth)[1], "x", dim(unMeth)[2], ").\n")
 			detectionPval <- assayDataElement(methLumi_data, "detection")
 			cat("\t detection p-values plate", i, " ok (", dim(detectionPval)[1], "x", dim(detectionPval)[2], ").\n")
 			#select "useful" probe annotations
 			annotation <- fData(methLumi_data) ; rm(methLumi_data)
 			index <- which(is.element(colnames(annotation), c("TargetID", "INFINIUM_DESIGN_TYPE", "RELATION_TO_UCSC_CPG_ISLAND", "UCSC_REFGENE_GROUP")))
+      
 			annotation <- annotation[,index]
 		} else if(length(sampleNames(methLumi_data))>0){
-			#concatenate 'betas'
-			beta_i <- getMethylumiBeta(methLumi_data, alfa)
-			cat("\t beta_", i, " ok (", dim(beta_i)[1], "x", dim(beta_i)[2], ").\n")
+      print(dim(methLumi_data))
+			#concatenate 'chanels'
+      
+			cat("\t Chanel_", i, " ok (", dim(unmethylated(methLumi_data))[1], "x", dim(unmethylated(methLumi_data))[2], ").\n")
 			detectionPval_i <- assayDataElement(methLumi_data, "detection")
-			cat("\t For all sub-projects: beta matrices concatenation & detection p-value matrices concatenation.\n")
+			cat("\t For all sub-projects: chanel matrices concatenation & detection p-value matrices concatenation.\n")
+			qc_i <- intensitiesByChannel(QCdata(methLumi_data))
+			rownames(qc_i[[1]]) <- toupper(rownames(qc_i[[1]]))
+			rownames(qc_i[[2]]) <- toupper(rownames(qc_i[[2]]))
+      
+			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[1]]))
+			rownames(qc_i[[2]]) <- gsub(pattern="NORM_A", replacement="NORM_A.", rownames(qc_i[[2]]))
 			
-      if(length(which(colnames(beta_i)%in%colnames(beta)))!=0){
-			  cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
-			  return(NULL)
+      if(length(which(colnames(unmethylated(methLumi_data))%in%colnames(unMeth)))!=0){
+        cat("Warning: duplicate samples are inputed. Please check input again an retry.\n")
+        return(NULL)
+      }
+
+      id1 <- which(tolower(rownames(qc[[1]])) %in% tolower(rownames(qc_i[[1]])))
+			id2 <- which(rownames(qc_i[[1]]) %in% rownames(qc[[1]]))
+      
+			which(rownames(qc[[1]]) %in% toupper(rownames(qc_i[[1]])))
+      
+			qc[[1]] <- cbind(qc[[1]], qc_i[[1]])
+			qc[[2]] <- cbind(qc[[2]], qc_i[[2]])
+			
+			if(length(rownames(meth)) == length(rownames(methylated(methLumi_data)))){
+				if(all(rownames(meth) == rownames(methylated(methLumi_data)))){
+					meth <- cbind(meth, methylated(methLumi_data))
+					unMeth <- cbind(unMeth, unmethylated(methLumi_data))
+				} else {
+					unMeth_i <- unmethylated(methLumi_data)
+					meth_i <- methylated(methLumi_data)
+					
+					unMeth_i<- as.matrix(unMeth_i[which(rownames(unMeth_i) %in% rownames(unMeth)),])
+					meth_i<- as.matrix(meth_i[which(rownames(meth_i) %in% rownames(meth)),])
+					
+					unMeth<- as.matrix(unMeth[which(rownames(unMeth) %in% rownames(unMeth_i)),])
+					meth<- as.matrix(meth[which(rownames(meth) %in% rownames(meth_i)),])
+					
+					meth <- cbind(meth[order(rownames(meth)),], meth_i[order(rownames(meth_i)),])
+					unMeth <- cbind(unMeth[order(rownames(unMeth)),], unMeth_i[order(rownames(unMeth_i)),])
+          
+					rm(unMeth_i)
+					rm(meth_i)
+				}
+			} else {
+				unMeth_i <- unmethylated(methLumi_data)
+				meth_i <- methylated(methLumi_data)
+				
+				unMeth_i<- as.matrix(unMeth_i[which(rownames(unMeth_i) %in% rownames(unMeth)),])
+				meth_i<- as.matrix(meth_i[which(rownames(meth_i) %in% rownames(meth)),])
+				
+				unMeth<- as.matrix(unMeth[which(rownames(unMeth) %in% rownames(unMeth_i)),])
+				meth<- as.matrix(meth[which(rownames(meth) %in% rownames(meth_i)),])
+				
+				meth <- cbind(meth[order(rownames(meth)),], meth_i[order(rownames(meth_i)),])
+				unMeth <- cbind(unMeth[order(rownames(unMeth)),], unMeth_i[order(rownames(unMeth_i)),])
+				
+        rm(unMeth_i)
+				rm(meth_i)
 			}
       
-			beta <- concatenateMatrices(beta, beta_i) ; rm(beta_i)
-			detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
-			annotation <- annotation[ which(is.element(annotation$TargetID, rownames(beta))),]
-
-			cat("\t beta ok (", dim(beta)[1], "x", dim(beta)[2], ").\n")
+      detectionPval <- concatenateMatrices(detectionPval, detectionPval_i) ; rm(detectionPval_i)
+      annotation <- annotation[ which(is.element(annotation$TargetID, rownames(unMeth))),]
+      
+			rm(qc_i)
+			
+			cat("\t Chanels ok (", dim(unMeth)[1], "x", dim(unMeth)[2], ").\n")
 			cat("\t detection p-values ok (", dim(detectionPval)[1], "x", dim(detectionPval)[2], ").\n")
 		}
 	}
 	
-	if(is.null(beta)){
+	if(is.null(unMeth) || is.null(meth)){
 		return(NULL)
 	}
   
-  if(qcAfterMerging){
-    t <- qcAfterMerg(
-      beta, 
-      detectionPval, 
-      detectionPval.threshold = detectionPval.threshold,
-      detectionPval.perc.threshold = detectionPval.perc.threshold,
-      detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
-      PATH = PATH
-      )
-    beta <- t[[1]]
-    detectionPval <- t[[2]]
-  }
-	
-	
+	if(qcAfterMerging){
+	  t <- qcAfterMerg(
+	    unMeth, 
+	    detectionPval, 
+	    detectionPval.threshold = detectionPval.threshold,
+	    detectionPval.perc.threshold = detectionPval.perc.threshold,
+	    detectionPval.perc.threshold2 = detectionPval.perc.threshold2,
+	    PATH = PATH
+	  )
+	  unMeth <- t[[1]]
+	  detectionPval <- t[[2]]
+
+	  meth <- meth[which(rownames(meth)%in%rownames(unMeth)),which(colnames(meth)%in%colnames(unMeth))]
+	}
+  
+
 	############################################################################################
 	# Extraction of SNP probes ("rs" probes)
 	############################################################################################
 	
-	indexSNP <- grep(pattern="rs*", x=rownames(beta))
+	indexSNP <- grep(pattern="rs*", x=rownames(unMeth))
 	if(length(indexSNP)>0){
-		betaSNP <- beta[indexSNP,]
-		detectionPvalSNP <- detectionPval[indexSNP,]
+		mSNP <- log2((meth[indexSNP,]+alfa)/(unMeth[indexSNP,]+alfa))
 		
-		beta <- beta[-indexSNP,]
+    detectionPvalSNP <- detectionPval[indexSNP,]
 		detectionPval <- detectionPval[-indexSNP,]
 		
-		write.table(betaSNP, file=paste(PATH_RES, projectName, "_betaSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+		write.table(mSNP, file=paste(PATH_RES, projectName, "_betaSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 		write.table(detectionPvalSNP, file=paste(PATH_RES, projectName, "_detectionPvalueSNPprobes.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
 	}
 	
-	############################################################################################
+	indexSNP <- grep(pattern="rs*", x=rownames(unMeth))
+	if(length(indexSNP)>0){
+		unMeth <- unMeth[-indexSNP,]
+		meth <- meth[-indexSNP,]
+	}	
+	
+	
+	############################################################################################								
 	# start data normalization (subset quantile normalization per probe annotation categories) #
 	############################################################################################
 	
-	if(NormProcedure == "None"){
-    if(betweenSampleCorrection){
-      beta2 <- normalize.quantiles(as.matrix(beta))
-      rownames(beta2) <- rownames(beta)
-      colnames(beta2) <- colnames(beta)
-      beta <- beta2
-      rm(beta2)
-    }
-    data.preprocess.norm <- list(beta, detectionPval)
-    names(data.preprocess.norm) <- c("beta", "detection.pvalue")
- 
-	} else if(NormProcedure == "BMIQ"){
-		data.preprocess.norm <- normalizeIlluminaMethylationBMIQ(
-			beta = beta,
+	if(NormProcedure=="None2"){
+    
+	  write.table(unMeth, file=paste(PATH_RES, projectName, "_U_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+	  write.table(meth, file=paste(PATH_RES, projectName, "_M_Signal.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+    
+	  beta <- getBetaMj(u=unMeth, m=meth, alfa=alfa)
+    head(beta)
+    
+    rm(unMeth, meth)
+    
+	  if(betweenSampleCorrection){
+	    beta2 <- normalize.quantiles(as.matrix(beta))
+	    rownames(beta2) <- rownames(beta)
+	    colnames(beta2) <- colnames(beta)
+	    beta <- beta2
+	    rm(beta2)
+	  }
+	  data.preprocess.norm <- list(beta, detectionPval)
+	  names(data.preprocess.norm) <- c("beta", "detection.pvalue")
+    
+	} else if(NormProcedure=="SWAN" && MvalueConv){
+		data.preprocess.norm <- normalizeIlluminaMethylationSWAN2(
 			detect.pval = detectionPval,
-			quantile.norm.pvalThreshold = detectionPval.threshold,
-			probeAnnotations = annotation,
-			probeAnnotationsCategory = probeAnnotationsCategory,
-			QCplot = QCplot,
+			unMeth,
+			meth,
+			qc,
+      alfa,
 			betweenSampleCorrection = betweenSampleCorrection
 		)
-	} else if(NormProcedure == "M-ValCor"){
-		data.preprocess.norm <- normalizeIlluminaMethylationMValCor(
-			beta = beta,
-			detect.pval = detectionPval,
-			quantile.norm.pvalThreshold = detectionPval.threshold,
-			probeAnnotations = annotation,
-			probeAnnotationsCategory = probeAnnotationsCategory,
-			QCplot = QCplot,
-			PATH_RES,
-			betweenSampleCorrection = betweenSampleCorrection,
-			medianReplacement
-		)
+	} else if(NormProcedure=="SWAN"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationSWAN(
+	    detect.pval = detectionPval,
+	    unMeth,
+	    meth,
+	    qc,
+	    alfa,
+	    betweenSampleCorrection = betweenSampleCorrection
+	  )
+	} else if(NormProcedure=="M-ValCor2"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationMValCor2(
+	    unMeth,
+	    meth,
+      detect.pval = detectionPval,
+	    annotation,
+	    QCplot,
+	    PATH_RES,
+	    alfa,
+	    betweenSampleCorrection = betweenSampleCorrection,
+	    medianReplacement
+	  )
+	} else if (NormProcedure=="NASEN"){
+	  data.preprocess.norm <- normalizeIlluminaMethylationNASEN(
+	    detect.pval = detectionPval,
+	    unMeth,
+	    meth,
+	    qc,
+	    annotation,
+	    alfa,
+	    MvalueConv,
+	    betweenSampleCorrection = betweenSampleCorrection
+	  )
 	} else {
-		data.preprocess.norm <- normalizeIlluminaMethylationSQN(
-			beta = beta,
+		data.preprocess.norm <- normalizeIlluminaMethylationDASEN(
 			detect.pval = detectionPval,
-			quantile.norm.pvalThreshold = detectionPval.threshold,
-			probeAnnotations = annotation,
-			probeAnnotationsCategory = probeAnnotationsCategory
+			unMeth,
+			meth,
+			qc,
+			annotation,
+			alfa,
+			MvalueConv,
+			betweenSampleCorrection = betweenSampleCorrection
 		)
 	}
 

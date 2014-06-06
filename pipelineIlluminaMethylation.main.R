@@ -5,7 +5,7 @@
 # m.j.bonder @ umcg.nl
 #
 ############################
-# Release data: 05-06-2014 #
+# Release data: 06-06-2014 #
 ############################
 #
 ########################################################################################################
@@ -24,7 +24,7 @@
 #################
 # Pre-requisites:
 # - install last 'lumi' and 'methylumi' bioconductor packages
-# - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats", "IlluminaHumanMethylation450k.db" and "compiler"
+# - all pacakges that are used: "lumi", "methylumi", "RPMM", "preprocessCore", "minfi", "matrixStats" and "IlluminaHumanMethylation450k.db"
 # - data format (1 raw data):
 #	- raw idat files
 # - data format (2 genomestudio):
@@ -243,9 +243,7 @@ require(RPMM)
 require(preprocessCore)
 require(minfi)
 require(matrixStats)
-require(compiler)
 require(IlluminaHumanMethylation450k.db)
-enableJIT(3)
 
 source(paste(PATH_SRC,"loadMethylumi2.R", sep=""))
 source(paste(PATH_SRC,"lumiMethyR2.R", sep=""))
@@ -268,6 +266,7 @@ source(paste(PATH_SRC,"dataDetectPval2NA.R", sep=""))
 source(paste(PATH_SRC,"uniqueAnnotationCategory.R", sep=""))
 source(paste(PATH_SRC,"findAnnotationProbes.R", sep=""))
 source(paste(PATH_SRC,"pipelineIlluminaMethylation.batch.R", sep=""))
+source(paste(PATH_SRC,"pipelineIlluminaMethylation.batch2.R", sep=""))
 source(paste(PATH_SRC,"plotQC.R", sep=""))
 source(paste(PATH_SRC,"plotMethylationDensity.R", sep=""))
 source(paste(PATH_SRC,"hclustPlot.R", sep=""))
