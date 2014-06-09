@@ -99,7 +99,6 @@ require(RPMM)
 require(preprocessCore)
 require(minfi)
 require(matrixStats)
-require(IlluminaHumanMethylation450k.db)
 
 source(paste(PATH_SRC,"loadMethylumi2.R", sep=""))
 source(paste(PATH_SRC,"lumiMethyR2.R", sep=""))
@@ -146,7 +145,7 @@ source(paste(PATH_SRC,"Average_U+M.filter.R", sep=""))
 }
 #
 data.preprocess.norm <- NULL
-print(paste(NormProcedure ,"normalization procedure"))
+print("DASEN normalization procedure")
 
   data.preprocess.norm <- pipelineIlluminaMethylation.batch2(
     PATH_PROJECT_DATA,

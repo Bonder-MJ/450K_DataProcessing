@@ -1,0 +1,10 @@
+source("http://bioconductor.org/biocLite.R")
+biocLite()
+
+biocLite("lumi")
+biocLite("methylumi")
+install.packages("RPMM")
+biocLite("preprocessCore")
+biocLite("minfi")
+biocLite("matrixStats")
+biocLite("IlluminaHumanMethylation450k.db")
