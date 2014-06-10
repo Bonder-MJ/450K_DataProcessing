@@ -184,14 +184,12 @@ beta <- data.preprocess.norm$beta
 detection.pvalue <- data.preprocess.norm$detection.pvalue
 
 
-if(outputType=="txt" || outputType=="both"){
-	write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
-	write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
-}
-if(outputType=="Rdata" || outputType=="both"){
-	save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
-	save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
-}
+
+write.table(beta, file=paste(PATH_RES, projectName, "_Mval.txt", sep=""), quote=FALSE, sep="\t", col.names = NA)
+write.table(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.txt", sep=""), sep="\t", col.names = NA)
+save(beta, file=paste(PATH_RES, projectName, "_Mval.RData", sep=""))
+save(detection.pvalue, file=paste(PATH_RES, projectName, "_detectionPvalue.RData", sep=""))
+
 
 
 if(QCplot){
