@@ -99,6 +99,7 @@ require(RPMM)
 require(preprocessCore)
 require(minfi)
 require(matrixStats)
+require(IlluminaHumanMethylation450k.db)
 
 source(paste(PATH_SRC,"loadMethylumi2.R", sep=""))
 source(paste(PATH_SRC,"lumiMethyR2.R", sep=""))
