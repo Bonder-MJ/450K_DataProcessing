@@ -2,12 +2,18 @@ source("http://bioconductor.org/biocLite.R")
 biocLite()
 
 ##Minimal pipeline (only works on R 2 & R 3)
-biocLite("lumi")
+biocLite("matrixStats")
+biocLite("wateRmelon")
+install.packages("RPMM")
+
+biocLite("minfi")
 biocLite("methylumi")
+biocLite("lumi")
+biocLite("preprocessCore")
+
+
+
 
 ##Extended pipeline (only works on R 2)
-biocLite("preprocessCore")
-biocLite("minfi")
-biocLite("matrixStats")
 biocLite("IlluminaHumanMethylation450k.db")
-install.packages("RPMM")
+
